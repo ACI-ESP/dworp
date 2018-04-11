@@ -1,0 +1,19 @@
+language: python
+python:
+  - 3.5
+  - 3.6
+
+branches:
+  only:
+  - master
+
+install:
+  - pip install nose
+  - pip install python-coveralls coverage
+  - pip install flake8
+before_script:
+  - flake8 dworp
+script:
+  - nosetests --with-coverage
+after_success:
+  - coveralls
