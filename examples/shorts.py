@@ -1,12 +1,12 @@
 """
 Whether you wear shorts depends on the temperature and whether your friends are wearing shorts
 """
-from dworp import Agent, Environment, Observer, Simulation
+import dworp
 import igraph
 import random
 
 
-class ShortsAgent(Agent):
+class ShortsAgent(dworp.Agent):
     def __init__(self, vertex):
         super().__init__(vertex.index)
         self.vertex = vertex
@@ -20,7 +20,7 @@ class ShortsAgent(Agent):
         self.wearing_shorts = random.random() < probability
 
 
-class ShortsEnvironment(Environment):
+class ShortsEnvironment(dworp.Environment):
     def __init__(self):
         self.temperature = 0
 
@@ -28,10 +28,7 @@ class ShortsEnvironment(Environment):
         self.temperature = random.randint(0, 30)
 
 
-class ShortsObserver(Observer):
-    def __init__(self):
-        pass
-
+class ShortsObserver(dworp.Observer):
     def step(self, index, agents, env):
         count = sum([agent.wearing_shorts for agent in agents])
         print("{}: Temp {} - Shorts {}".format(index, env.temperature, count))
@@ -40,7 +37,8 @@ class ShortsObserver(Observer):
 g = igraph.Graph.Erdos_Renyi(n=100, p=0.05, directed=False)
 agents = [ShortsAgent(v) for v in g.vs]
 env = ShortsEnvironment()
-observor = ShortsObserver()
-sim = Simulation(agents, env, 10, observor)
+observer = ShortsObserver()
+scheduler = dworp.RandomOrderScheduler()
+sim = dworp.Simulation(agents, env, 10, scheduler, observer)
 
 sim.run()
