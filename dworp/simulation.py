@@ -12,3 +12,6 @@ class Simulation:
                 agent.step(self.env)
             if self.observer is not None:
                 self.observer.step(i, self.agents, self.env)
+
+        if self.observer is not None:
+            self.observer.done(i, self.agents, self.env)
