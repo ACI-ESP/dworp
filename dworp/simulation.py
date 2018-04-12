@@ -6,12 +6,13 @@ class Simulation:
         self.observer = observer
 
     def run(self):
-        for i in range(self.length):
+        index = 0
+        for index in range(self.length):
             self.env.step()
             for agent in self.agents:
                 agent.step(self.env)
             if self.observer is not None:
-                self.observer.step(i, self.agents, self.env)
+                self.observer.step(index, self.agents, self.env)
 
         if self.observer is not None:
-            self.observer.done(i, self.agents, self.env)
+            self.observer.done(index, self.agents, self.env)
