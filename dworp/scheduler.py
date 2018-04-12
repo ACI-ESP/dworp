@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+import logging
 import numpy as np
 
 
 class Scheduler(ABC):
+    logger = logging.getLogger(__name__)
+
     def set_agents(self, agents):
         self.agents = agents
 

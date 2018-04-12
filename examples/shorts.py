@@ -3,6 +3,7 @@ Whether you wear shorts depends on the temperature and whether your friends are 
 """
 import dworp
 import igraph
+import logging
 import random
 
 
@@ -26,6 +27,7 @@ class ShortsEnvironment(dworp.Environment):
 
     def step(self):
         self.temperature = random.randint(0, 30)
+        self.logger.info("Temperature is now {}".format(self.temperature))
 
 
 class ShortsObserver(dworp.Observer):
@@ -34,6 +36,7 @@ class ShortsObserver(dworp.Observer):
         print("{}: Temp {} - Shorts {}".format(index, env.temperature, count))
 
 
+logging.basicConfig(level=logging.WARN)
 g = igraph.Graph.Erdos_Renyi(n=100, p=0.05, directed=False)
 agents = [ShortsAgent(v) for v in g.vs]
 env = ShortsEnvironment()

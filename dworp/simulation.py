@@ -1,4 +1,9 @@
+import logging
+
+
 class Simulation:
+    logger = logging.getLogger(__name__)
+
     def __init__(self, agents, env, length, scheduler, observer=None):
         self.agents = agents
         self.env = env

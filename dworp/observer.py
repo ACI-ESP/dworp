@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 
 
 class Observer(ABC):
@@ -7,6 +8,8 @@ class Observer(ABC):
     Runs after each time step in the simulation.
     Can be used to collect data for analysis of the simulation.
     """
+    logger = logging.getLogger(__name__)
+
     @abstractmethod
     def step(self, index, agents, env):
         """Run the observer after a step of the simulation has finished
