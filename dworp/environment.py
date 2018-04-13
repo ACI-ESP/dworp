@@ -35,3 +35,15 @@ class Environment(ABC):
             agents (list): list of Agent objects
         """
         pass
+
+
+class GraphEnvironment(Environment):
+    """Environment with a graph over the agents
+
+    Attributes:
+        state (np.array): environment state vector of floats
+        graph (obj): graph object
+    """
+    def __init__(self, size, graph):
+        super().__init__(size)
+        self.graph = graph
