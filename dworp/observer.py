@@ -32,12 +32,12 @@ class Observer(ABC):
 
 
 class ChainedObserver(Observer):
-    """Chain multiple observers into a sequence"""
+    """Chain multiple observers into a sequence
+
+    Args:
+        *observers: Variable length arguments of Observer objects
+    """
     def __init__(self, *observers):
-        """
-        Args:
-            *observers: Variable length arguments of Observer objects
-        """
         self.observers = observers
 
     def step(self, time, agents, env):

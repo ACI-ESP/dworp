@@ -5,12 +5,34 @@ import numpy as np
 
 
 class Time(Iterator):
+    """Base class for time generation
+
+    The simulation supports arbitrary time scales controlled by Time.
+    The simulation iterates over the Time object to get the next time value.
+
+    Can be used like so:
+      time_gen = MyTime()
+      for t in time_gen:
+          print(t)
+    """
     @abstractmethod
     def get_start_time(self):
+        """Get the start time of the simulation
+
+        Returns:
+            int or float
+        """
         pass
 
 
 class BasicTime(Time):
+    """Fixed step size time generation
+
+    Args:
+        num_steps (int): Number of time steps in the simulation
+        start (int or float, optional): Start time of the simulation
+        step_size (int or float, optional): Time step size
+    """
     def __init__(self, num_steps, start=0, step_size=1):
         self.start_time = start
         self.time = start
@@ -30,24 +52,41 @@ class BasicTime(Time):
 
 
 class Scheduler(ABC):
+    """Scheduling agents
+
+    Determines which agents update for a particular time step.
+    """
     logger = logging.getLogger(__name__)
 
     @abstractmethod
     def step(self, time, agents, env):
+        """ Get the next step in schedule
+
+        Args:
+            time (int or float): current time of the simulation
+            agents (list): list of Agent objects
+            env (Environment): environment object
+
+        Returns:
+            list of agent indices
+        """
         pass
 
 
 class BasicScheduler(Scheduler):
+    """Schedules all agents in the order of the agents list"""
     def step(self, time, agents, env):
         return range(len(agents))
 
 
 class RandomOrderScheduler(Scheduler):
+    """Random permutation of all agents"""
     def step(self, time, agents, env):
         return np.random.permutation(len(agents))
 
 
 class RandomSampleScheduler(Scheduler):
+    """Uniformly sample from the list of agents"""
     def __init__(self, size):
         self.size = size
 

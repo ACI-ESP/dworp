@@ -2,6 +2,18 @@ import logging
 
 
 class Simulation:
+    """Simulation master
+
+    Runs a single realization of the simulation.
+    This will initialize the agents and the environment.
+
+    Args:
+        agents (list): list of initial agents
+        env (Environment): environment object
+        time (Time): time generation object
+        scheduler (Scheduler): schedule generation object
+        observer (Observer): records and logs data from the simulation
+    """
     logger = logging.getLogger(__name__)
 
     def __init__(self, agents, env, time, scheduler, observer):
@@ -15,6 +27,7 @@ class Simulation:
             agent.init(self.time.start_time, self.env)
 
     def run(self):
+        """Run the realization to completion"""
         for current_time in self.time:
             self.env.step(current_time, self.agents)
             schedule = self.scheduler.step(current_time, self.agents, self.env)
