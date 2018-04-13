@@ -4,44 +4,64 @@ Whether you wear shorts depends on the temperature and whether your friends are 
 import dworp
 import igraph
 import logging
+import numpy as np
 import random
 
 
-class ShortsAgent(dworp.Agent):
-    def __init__(self, vertex):
-        super().__init__(vertex.index)
-        self.vertex = vertex
-        vertex['agent'] = self
-        self.wearing_shorts = False
+class CollegeStudent(dworp.Agent):
+    SHORTS = 0
 
-    def step(self, env):
-        num_neighbors = len(self.vertex.neighbors())
-        count = sum([v['agent'].wearing_shorts for v in self.vertex.neighbors()])
-        probability = 0.5 * env.temperature / float(30) + 0.5 * count / (float(num_neighbors) + 0.0001)
-        self.wearing_shorts = random.random() < probability
+    def __init__(self, agent_id):
+        super().__init__(agent_id, 1)
+
+    def init(self, start_time, env):
+        self.state.fill(0)
+
+    def step(self, new_time, env):
+        probability = env.temp / float(env.MAX_TEMP)
+        self.state[self.SHORTS] = random.random() < probability
+        self.logger.info("Agent {} has shorts status {}".format(self.agent_id, self.state[self.SHORTS]))
+
+    @property
+    def wearing_shorts(self):
+        return bool(self.state[self.SHORTS])
 
 
-class ShortsEnvironment(dworp.Environment):
+class WeatherEnvironment(dworp.Environment):
+    TEMP = 0
+    MIN_TEMP = 0
+    MAX_TEMP = 30
+
     def __init__(self):
-        self.temperature = 0
+        super().__init__(1)
 
-    def step(self):
-        self.temperature = random.randint(0, 30)
-        self.logger.info("Temperature is now {}".format(self.temperature))
+    def init(self, start_time):
+        self.state.fill(0)
+
+    def step(self, new_time, agents):
+        self.state[self.TEMP] = np.random.randint(self.MIN_TEMP, self.MAX_TEMP)
+        self.logger.info("Temperature is now {}".format(self.state[self.TEMP]))
+
+    @property
+    def temp(self):
+        return self.state[self.TEMP]
 
 
 class ShortsObserver(dworp.Observer):
-    def step(self, index, agents, env):
+    def step(self, time, agents, env):
         count = sum([agent.wearing_shorts for agent in agents])
-        print("{}: Temp {} - Shorts {}".format(index, env.temperature, count))
+        print("{}: Temp {} - Shorts {}".format(time, env.temp, count))
+
+    def done(self, agents, env):
+        print("Simulation over")
 
 
 logging.basicConfig(level=logging.WARN)
-g = igraph.Graph.Erdos_Renyi(n=100, p=0.05, directed=False)
-agents = [ShortsAgent(v) for v in g.vs]
-env = ShortsEnvironment()
-observer = ShortsObserver()
+agents = [CollegeStudent(x) for x in range(100)]
+env = WeatherEnvironment()
+time = dworp.BasicTime(10)
 scheduler = dworp.RandomOrderScheduler()
-sim = dworp.Simulation(agents, env, 10, scheduler, observer)
+observer = ShortsObserver()
+sim = dworp.Simulation(agents, env, time, scheduler, observer)
 
 sim.run()

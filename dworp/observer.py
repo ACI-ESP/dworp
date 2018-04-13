@@ -11,21 +11,20 @@ class Observer(ABC):
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def step(self, index, agents, env):
+    def step(self, time, agents, env):
         """Run the observer after a step of the simulation has finished
 
         Args:
-            index (int): Zero-based time index
+            time (int): Current time value
             agents (list): List of agents in the simulation
             env (object): Environment object for this time index
         """
         pass
 
-    def done(self, index, agents, env):
+    def done(self, agents, env):
         """Run the observer one last time when the simulation is complete
 
         Args:
-            index (int): Zero-based time index
             agents (list): List of agents in the simulation
             env (object): Environment object for this time index
         """
@@ -41,10 +40,10 @@ class ChainedObserver(Observer):
         """
         self.observers = observers
 
-    def step(self, index, agents, env):
+    def step(self, time, agents, env):
         for observer in self.observers:
-            observer.step(index, agents, env)
+            observer.step(time, agents, env)
 
-    def done(self, index, agents, env):
+    def done(self, agents, env):
         for observer in self.observers:
-            observer.done(index, agents, env)
+            observer.done(agents, env)

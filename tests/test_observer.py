@@ -19,7 +19,7 @@ class ChainedObserverTest(unittest.TestCase):
         obs2 = mock.create_autospec(spec=Observer)
         obs = ChainedObserver(obs1, obs2)
 
-        obs.done(1, [], None)
+        obs.done([], None)
 
-        self.assertEqual([mock.call.done(1, [], None)], obs1.mock_calls)
-        self.assertEqual([mock.call.done(1, [], None)], obs2.mock_calls)
+        self.assertEqual([mock.call.done([], None)], obs1.mock_calls)
+        self.assertEqual([mock.call.done([], None)], obs2.mock_calls)
