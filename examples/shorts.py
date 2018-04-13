@@ -19,7 +19,7 @@ class CollegeStudent(dworp.Agent):
 
     def step(self, new_time, env):
         probability = env.temp / float(env.MAX_TEMP)
-        self.state[self.SHORTS] = random.random() < probability
+        self.state[self.SHORTS] = np.random.uniform() < probability
         self.logger.info("Agent {} has shorts status {}".format(self.agent_id, self.state[self.SHORTS]))
 
     @property
