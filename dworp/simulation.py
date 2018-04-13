@@ -30,8 +30,13 @@ class Simulation:
         """Run the realization to completion"""
         for current_time in self.time:
             self.env.step(current_time, self.agents)
+            # agents update state
             schedule = self.scheduler.step(current_time, self.agents, self.env)
             for index in schedule:
                 self.agents[index].step(current_time, self.env)
+            # agents copy state to complete time step
+            schedule = self.scheduler.step(current_time, self.agents, self.env)
+            for index in schedule:
+                self.agents[index].complete()
             self.observer.step(current_time, self.agents, self.env)
         self.observer.done(self.agents, self.env)
