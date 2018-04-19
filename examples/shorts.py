@@ -30,7 +30,7 @@ class CollegeStudent(dworp.Agent):
         return bool(self.state[self.SHORTS])
 
 
-class WeatherEnvironment(dworp.GraphEnvironment):
+class WeatherEnvironment(dworp.NetworkEnvironment):
     TEMP = 0
     MIN_TEMP = 0
     MAX_TEMP = 30

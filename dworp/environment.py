@@ -37,13 +37,14 @@ class Environment(ABC):
         pass
 
 
-class GraphEnvironment(Environment):
-    """Environment with a graph over the agents
+class NetworkEnvironment(Environment):
+    """Environment with a network over the agents
 
     Attributes:
         state (np.array): environment state vector of floats
-        graph (obj): graph object
+        network (obj): network object
     """
-    def __init__(self, size, graph):
+    def __init__(self, size, network):
         super().__init__(size)
-        self.graph = graph
+        self.network = network
+
