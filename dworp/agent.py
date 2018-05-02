@@ -80,5 +80,5 @@ class Agent(ABC):
             env (Environment): environment object (do not modify!)
         """
         # Could replace with reference swap
-        if self.state:
+        if self.state is not None:
             np.copyto(self.state, self.next_state)
