@@ -88,7 +88,7 @@ class SegregationEnvironment(dworp.Environment):
         pass
 
 
-class StdoutObserver(dworp.Observer):
+class SegObserver(dworp.Observer):
     """Writes simulation state to stdout"""
     def start(self, time, agents, env):
         print("Starting: {}% agents happy".format(self.get_happiness(agents)))
@@ -103,6 +103,12 @@ class StdoutObserver(dworp.Observer):
     def get_happiness(agents):
         num_happy = sum(agent.happy for agent in agents)
         return 100 * num_happy / float(len(agents))
+
+
+class SegTerminator(dworp.Terminator):
+    """Stop when everyone is happy"""
+    def test(self, time, agents, env):
+        return SegObserver.get_happiness(agents) >= 100
 
 
 class HeatmapPlotObserver(dworp.Observer):
@@ -138,13 +144,12 @@ class HeatmapPlotObserver(dworp.Observer):
 
 class SegregationParams:
     """Container for simulation parameters"""
-    def __init__(self, density, similarity, grid_size, seed, steps, colors):
+    def __init__(self, density, similarity, grid_size, seed, colors):
         self.density = density
         self.similarity = similarity
         self.grid_width = grid_size[0]
         self.grid_height = grid_size[1]
         self.seed = seed
-        self.steps = steps
         self.colors = colors
 
 
@@ -154,8 +159,9 @@ class SegregationSimulation(dworp.DoubleStageSimulation):
         self.params = params
         self.rng = np.random.RandomState(seed)
         factory = HouseholdFactory(self.rng, params.similarity, params.colors[0], params.colors[1])
-        time = dworp.BasicTime(params.steps)
+        time = dworp.InfiniteTime()
         scheduler = dworp.RandomOrderScheduler()
+        terminator = SegTerminator()
 
         agents = []
         grid = dworp.Grid(params.grid_width, params.grid_height)
@@ -167,19 +173,18 @@ class SegregationSimulation(dworp.DoubleStageSimulation):
                     grid.set(agent, x, y)
                     agents.append(agent)
 
-        super().__init__(agents, env, time, scheduler, observer)
+        super().__init__(agents, env, time, scheduler, observer, terminator)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARN)
 
-    # parse command line parameters
+    # parse command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--density", help="density of agents (1-99)", default=95, type=int)
     parser.add_argument("--similar", help="desired similarity (0-100)", default=30, type=int)
     parser.add_argument("--size", help="grid size formatted as XXXxYYY", default="50x50")
     parser.add_argument("--seed", help="seed of RNG", default=42, type=int)
-    parser.add_argument("--steps", help="Number of time steps", default=10, type=int)
     args = parser.parse_args()
 
     # prepare parameters of simulation
@@ -189,13 +194,12 @@ if __name__ == "__main__":
     similarity = args.similar / float(100)
     grid_size = [int(dim) for dim in args.size.split("x")]
     seed = args.seed
-    steps = args.steps
     colors = ["blue", "orange"]
-    params = SegregationParams(density, similarity, grid_size, seed, steps, colors)
+    params = SegregationParams(density, similarity, grid_size, seed, colors)
 
     # create and run one realization of the simulation
     observer = dworp.ChainedObserver(
-        StdoutObserver(),
+        SegObserver(),
         HeatmapPlotObserver(colors),
         dworp.PauseObserver(delay=1, start=True, matplotlib=True)
     )

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+from .scheduling import NullTerminator
 
 
 class Simulation(ABC):
@@ -24,14 +25,16 @@ class SingleStageSimulation(Simulation):
         time (Time): time generation object
         scheduler (Scheduler): schedule generation object
         observer (Observer): records and logs data from the simulation
+        terminator (Terminator): Optional simulation terminator
     """
 
-    def __init__(self, agents, env, time, scheduler, observer):
+    def __init__(self, agents, env, time, scheduler, observer, terminator=None):
         self.agents = agents
         self.env = env
         self.time = time
         self.scheduler = scheduler
         self.observer = observer
+        self.terminator = terminator if terminator else NullTerminator()
 
         self.env.init(self.time.start_time)
         for agent in self.agents:
@@ -46,6 +49,8 @@ class SingleStageSimulation(Simulation):
             for index in schedule:
                 self.agents[index].step(current_time, self.env)
             self.observer.step(current_time, self.agents, self.env)
+            if self.terminator.test(current_time, self.agents, self.env):
+                break
         self.observer.done(self.agents, self.env)
 
 
@@ -61,11 +66,12 @@ class DoubleStageSimulation(SingleStageSimulation):
         time (Time): time generation object
         scheduler (Scheduler): schedule generation object
         observer (Observer): records and logs data from the simulation
+        terminator (Terminator): Optional simulation terminator
     """
     logger = logging.getLogger(__name__)
 
-    def __init__(self, agents, env, time, scheduler, observer):
-        super().__init__(agents, env, time, scheduler, observer)
+    def __init__(self, agents, env, time, scheduler, observer, terminator=None):
+        super().__init__(agents, env, time, scheduler, observer, terminator)
 
     def run(self):
         """Run the realization to completion"""
@@ -82,4 +88,6 @@ class DoubleStageSimulation(SingleStageSimulation):
             for index in updated_agents:
                 self.agents[index].complete(current_time, self.env)
             self.observer.step(current_time, self.agents, self.env)
+            if self.terminator.test(current_time, self.agents, self.env):
+                break
         self.observer.done(self.agents, self.env)

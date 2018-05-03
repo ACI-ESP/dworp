@@ -26,7 +26,7 @@ class Time(Iterator):
 
 
 class BasicTime(Time):
-    """Fixed step size time generation
+    """Fixed step size and fixed num of steps
 
     Args:
         num_steps (int): Number of time steps in the simulation
@@ -49,6 +49,49 @@ class BasicTime(Time):
             raise StopIteration
         self.time += self.step_size
         return self.time
+
+
+class InfiniteTime(Time):
+    """Fixed step size and infinite num of steps
+
+    Args:
+        start (int or float, optional): Start time of the simulation
+        step_size (int or float, optional): Time step size
+    """
+    def __init__(self, start=0, step_size=1):
+        self.start_time = start
+        self.time = start
+        self.step_size = step_size
+
+    def get_start_time(self):
+        return self.start_time
+
+    def __next__(self):
+        self.time += self.step_size
+        return self.time
+
+
+class Terminator(ABC):
+    """Terminate the simulation when a convergence criteria is achieved"""
+    @abstractmethod
+    def test(self, time, agents, env):
+        """
+        Return True to stop the simulation
+
+        Args:
+            time: (int or float): current time of the simulation
+            agents (list): list of Agent objects
+            env: (Environment): environment object
+
+        Returns: bool
+        """
+        pass
+
+
+class NullTerminator(Terminator):
+    """Never terminate!"""
+    def test(self, time, agents, env):
+        return False
 
 
 class Scheduler(ABC):
