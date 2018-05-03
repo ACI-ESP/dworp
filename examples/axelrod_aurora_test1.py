@@ -109,9 +109,8 @@ g = igraph.Graph.Lattice([xdim,ydim], nei=1, directed=False, circular=False)
 agents = [Site(v) for v in g.vs]
 env = AxelrodEnvironment(g)
 time = dworp.BasicTime(n_tsteps)
-scheduler = dworp.RandomOrderScheduler()
+scheduler = dworp.RandomOrderScheduler(np.random.RandomState())
 observer = AxelrodObserver()
-sim = dworp.Simulation(agents, env, time, scheduler, observer)
+sim = dworp.DoubleStageSimulation(agents, env, time, scheduler, observer)
 
 sim.run()
-
