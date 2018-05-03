@@ -63,7 +63,7 @@ class Grid:
         height (int): height of the grid (y dimension)
     """
     def __init__(self, width, height):
-        self.width = height
+        self.width = width
         self.height = height
         self.data = np.empty(shape=(width, height), dtype=object)
 

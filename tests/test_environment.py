@@ -4,6 +4,10 @@ import unittest.mock as mock
 
 
 class GridTest(unittest.TestCase):
+    def test_creation(self):
+        grid = Grid(10, 20)
+        self.assertEqual((10, 20), grid.data.shape)
+
     def test_occupied(self):
         grid = Grid(10, 10)
         grid.set(mock.Mock(), 3, 2)
