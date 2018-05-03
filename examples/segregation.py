@@ -160,7 +160,7 @@ class SegregationSimulation(dworp.DoubleStageSimulation):
         self.rng = np.random.RandomState(seed)
         factory = HouseholdFactory(self.rng, params.similarity, params.colors[0], params.colors[1])
         time = dworp.InfiniteTime()
-        scheduler = dworp.RandomOrderScheduler()
+        scheduler = dworp.RandomOrderScheduler(self.rng)
         terminator = SegTerminator()
 
         agents = []

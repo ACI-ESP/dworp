@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 import logging
-import numpy as np
 
 
 class Time(Iterator):
@@ -123,15 +122,28 @@ class BasicScheduler(Scheduler):
 
 
 class RandomOrderScheduler(Scheduler):
-    """Random permutation of all agents"""
+    """Random permutation of all agents
+
+    Args:
+        rng (numpy.random.RandomState): numpy random generator
+    """
+    def __init__(self, rng):
+        self.rng = rng
+
     def step(self, time, agents, env):
-        return np.random.permutation(len(agents))
+        return self.rng.permutation(len(agents))
 
 
 class RandomSampleScheduler(Scheduler):
-    """Uniformly sample from the list of agents"""
-    def __init__(self, size):
+    """Uniformly sample from the list of agents
+
+    Args:
+        size (int): size of the sample
+        rng (numpy.random.RandomState): numpy random generator
+    """
+    def __init__(self, size, rng):
         self.size = size
+        self.rng = rng
 
     def step(self, time, agents, env):
-        return np.random.permutation(len(agents))[:self.size]
+        return self.rng.permutation(len(agents))[:self.size]

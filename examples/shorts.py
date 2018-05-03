@@ -64,7 +64,7 @@ g = igraph.Graph.Erdos_Renyi(n=100, p=0.05, directed=False)
 agents = [CollegeStudent(v) for v in g.vs]
 env = WeatherEnvironment(g)
 time = dworp.BasicTime(10)
-scheduler = dworp.RandomOrderScheduler()
+scheduler = dworp.BasicScheduler()
 observer = ShortsObserver()
 sim = dworp.DoubleStageSimulation(agents, env, time, scheduler, observer)
 
