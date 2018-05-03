@@ -157,7 +157,7 @@ class SegregationSimulation(dworp.DoubleStageSimulation):
     """Simulation with two stages (moving and then happiness test)"""
     def __init__(self, params, observer):
         self.params = params
-        self.rng = np.random.RandomState(seed)
+        self.rng = np.random.RandomState(params.seed)
         factory = HouseholdFactory(self.rng, params.similarity, params.colors[0], params.colors[1])
         time = dworp.InfiniteTime()
         scheduler = dworp.RandomOrderScheduler(self.rng)
