@@ -85,11 +85,11 @@ class Grid:
         """Remove the agent from here"""
         self.data[x, y] = None
 
-    def move(self, agent, x1, y1, x2, y2):
+    def move(self, x1, y1, x2, y2):
         """Move an agent from location 1 to location 2
-        Does not check if the agent actually lives at location 1!
         Does not check if anyone lives at location 2!
         """
+        agent = self.get(x1, y1)
         self.remove(x1, y1)
         self.set(agent, x2, y2)
 

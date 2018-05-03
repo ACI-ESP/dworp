@@ -77,7 +77,7 @@ class SegregationEnvironment(dworp.Environment):
         while self.grid.occupied(x2, y2):
             x2 = self.rng.randint(0, self.grid.width)
             y2 = self.rng.randint(0, self.grid.height)
-        self.grid.move(agent, x1, y1, x2, y2)
+        self.grid.move(x1, y1, x2, y2)
         agent.x = x2
         agent.y = y2
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     observer = dworp.ChainedObserver(
         StdoutObserver(),
         HeatmapPlotObserver(colors),
-        dworp.PauseObserver(1, start=True, matplotlib=True)
+        dworp.PauseObserver(delay=1, start=True, matplotlib=True)
     )
     sim = SegregationSimulation(params, observer)
     sim.run()
