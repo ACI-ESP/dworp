@@ -1,7 +1,10 @@
 import argparse
 import dworp
 import logging
+import matplotlib.colors
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 class Household(dworp.Agent):
@@ -52,7 +55,7 @@ class ColorAssigner:
 
 class HouseholdFactory:
     """Creates households as needed"""
-    def __init__(self, rng, similarity, color1="blue", color2="orange"):
+    def __init__(self, rng, similarity, color1, color2):
         self.namer = dworp.IdentifierHelper.get()
         self.similarity = similarity
         self.colorer = ColorAssigner(rng, color1, color2)
@@ -102,15 +105,47 @@ class StdoutObserver(dworp.Observer):
         return 100 * num_happy / float(len(agents))
 
 
+class HeatmapPlotObserver(dworp.Observer):
+    """Plot the segregration grid"""
+    def __init__(self, colors):
+        self.data = None
+        self.colors = colors
+        cmap = matplotlib.colors.ListedColormap([colors[0], "white", colors[1]])
+        self.options = {
+            'cmap': cmap, 'cbar': False, 'linewidths': 0.2,
+            'xticklabels': False, 'yticklabels': False
+        }
+
+    def start(self, time, agents, env):
+        self.data = np.zeros(env.grid.data.shape)
+        plt.ion()
+        self.plot(env.grid)
+
+    def step(self, time, agents, env):
+        self.plot(env.grid)
+
+    def plot(self, grid):
+        for x in range(self.data.shape[0]):
+            for y in range(self.data.shape[1]):
+                if grid.data[x, y] is None:
+                    self.data[x, y] = 0
+                elif grid.data[x, y].color == self.colors[0]:
+                    self.data[x, y] = -1
+                else:
+                    self.data[x, y] = 1
+        sns.heatmap(self.data, **self.options)
+
+
 class SegregationParams:
     """Container for simulation parameters"""
-    def __init__(self, density, similarity, grid_size, seed, steps):
+    def __init__(self, density, similarity, grid_size, seed, steps, colors):
         self.density = density
         self.similarity = similarity
         self.grid_width = grid_size[0]
         self.grid_height = grid_size[1]
         self.seed = seed
         self.steps = steps
+        self.colors = colors
 
 
 class SegregationSimulation(dworp.DoubleStageSimulation):
@@ -118,7 +153,7 @@ class SegregationSimulation(dworp.DoubleStageSimulation):
     def __init__(self, params, observer):
         self.params = params
         self.rng = np.random.RandomState(seed)
-        factory = HouseholdFactory(self.rng, params.similarity)
+        factory = HouseholdFactory(self.rng, params.similarity, params.colors[0], params.colors[1])
         time = dworp.BasicTime(params.steps)
         scheduler = dworp.RandomOrderScheduler()
 
@@ -155,8 +190,14 @@ if __name__ == "__main__":
     grid_size = [int(dim) for dim in args.size.split("x")]
     seed = args.seed
     steps = args.steps
-    params = SegregationParams(density, similarity, grid_size, seed, steps)
+    colors = ["blue", "orange"]
+    params = SegregationParams(density, similarity, grid_size, seed, steps, colors)
 
     # create and run one realization of the simulation
-    sim = SegregationSimulation(params, StdoutObserver())
+    observer = dworp.ChainedObserver(
+        StdoutObserver(),
+        HeatmapPlotObserver(colors),
+        dworp.PauseObserver(1, start=True, matplotlib=True)
+    )
+    sim = SegregationSimulation(params, observer)
     sim.run()

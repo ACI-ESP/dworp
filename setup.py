@@ -7,7 +7,7 @@ __version__ = '0.0.1.dev'
 setup(
     name='dworp',
     version=__version__,
-    description='Agent-based modeling frameowkr',
+    description='Agent-based modeling framework',
     long_description=open('README.md').read(),
     author=__author__,
     author_email=__email__,
@@ -17,7 +17,8 @@ setup(
     classifiers=[
     ],
     install_requires=[
-        'numpy'
+        'numpy',
+        'matplotlib'
     ],
     python_requires='>=3.5',
 )
