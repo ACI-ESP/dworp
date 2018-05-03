@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 import logging
-import numpy as np
 
 
 class Time(Iterator):
@@ -26,7 +25,7 @@ class Time(Iterator):
 
 
 class BasicTime(Time):
-    """Fixed step size time generation
+    """Fixed step size and fixed num of steps
 
     Args:
         num_steps (int): Number of time steps in the simulation
@@ -49,6 +48,49 @@ class BasicTime(Time):
             raise StopIteration
         self.time += self.step_size
         return self.time
+
+
+class InfiniteTime(Time):
+    """Fixed step size and infinite num of steps
+
+    Args:
+        start (int or float, optional): Start time of the simulation
+        step_size (int or float, optional): Time step size
+    """
+    def __init__(self, start=0, step_size=1):
+        self.start_time = start
+        self.time = start
+        self.step_size = step_size
+
+    def get_start_time(self):
+        return self.start_time
+
+    def __next__(self):
+        self.time += self.step_size
+        return self.time
+
+
+class Terminator(ABC):
+    """Terminate the simulation when a convergence criteria is achieved"""
+    @abstractmethod
+    def test(self, time, agents, env):
+        """
+        Return True to stop the simulation
+
+        Args:
+            time: (int or float): current time of the simulation
+            agents (list): list of Agent objects
+            env: (Environment): environment object
+
+        Returns: bool
+        """
+        pass
+
+
+class NullTerminator(Terminator):
+    """Never terminate!"""
+    def test(self, time, agents, env):
+        return False
 
 
 class Scheduler(ABC):
@@ -80,15 +122,28 @@ class BasicScheduler(Scheduler):
 
 
 class RandomOrderScheduler(Scheduler):
-    """Random permutation of all agents"""
+    """Random permutation of all agents
+
+    Args:
+        rng (numpy.random.RandomState): numpy random generator
+    """
+    def __init__(self, rng):
+        self.rng = rng
+
     def step(self, time, agents, env):
-        return np.random.permutation(len(agents))
+        return self.rng.permutation(len(agents))
 
 
 class RandomSampleScheduler(Scheduler):
-    """Uniformly sample from the list of agents"""
-    def __init__(self, size):
+    """Uniformly sample from the list of agents
+
+    Args:
+        size (int): size of the sample
+        rng (numpy.random.RandomState): numpy random generator
+    """
+    def __init__(self, size, rng):
         self.size = size
+        self.rng = rng
 
     def step(self, time, agents, env):
-        return np.random.permutation(len(agents))[:self.size]
+        return self.rng.permutation(len(agents))[:self.size]

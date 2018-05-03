@@ -1,6 +1,28 @@
 from abc import ABC, abstractmethod
+import itertools
 import logging
 import numpy as np
+
+
+class IdentifierHelper:
+    """Agent Identifier Generation Helper
+
+    Create generators for identifiers.
+    Example:
+        gen = IdentifierHelper.get()
+        agent_id = next(gen)
+    """
+    @classmethod
+    def get(cls, start=1):
+        """Get generator for numerical identifiers
+
+        Args:
+            start (int): optional starting identifier (default 1)
+
+        Returns:
+            generator
+        """
+        return itertools.count(start)
 
 
 class Agent(ABC):
@@ -19,8 +41,12 @@ class Agent(ABC):
 
     def __init__(self, agent_id, size):
         self.agent_id = agent_id
-        self.state = np.zeros(size, dtype='f')
-        self.next_state = np.zeros(size, dtype='f')
+        if size > 0:
+            self.state = np.zeros(size, dtype='f')
+            self.next_state = np.zeros(size, dtype='f')
+        else:
+            self.state = None
+            self.next_state = None
 
     @abstractmethod
     def init(self, start_time, env):
@@ -44,7 +70,15 @@ class Agent(ABC):
         """
         pass
 
-    def complete(self):
-        """Complete a time step by copying the next state to current state"""
+    def complete(self, new_time, env):
+        """Complete a time step
+
+        This copies the next state to current state.
+
+        Args:
+            new_time (int, float): Current time of the simulation
+            env (Environment): environment object (do not modify!)
+        """
         # Could replace with reference swap
-        np.copyto(self.state, self.next_state)
+        if self.state is not None:
+            np.copyto(self.state, self.next_state)
