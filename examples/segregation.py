@@ -153,7 +153,7 @@ class SegregationParams:
         self.colors = colors
 
 
-class SegregationSimulation(dworp.DoubleStageSimulation):
+class SegregationSimulation(dworp.TwoStageSimulation):
     """Simulation with two stages (moving and then happiness test)"""
     def __init__(self, params, observer):
         self.params = params
