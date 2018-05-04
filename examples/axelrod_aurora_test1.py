@@ -27,7 +27,7 @@ import numpy as np
 import pdb
 
 
-class Site(dworp.Agent):
+class Site(dworp.TwoStageAgent):
 
     #cultural_features = np.zeros(5) # there are 5 cultural features that have integer values
     # the values of the cultural features are represented by the digits 0 through 9
