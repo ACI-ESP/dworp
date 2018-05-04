@@ -105,9 +105,6 @@ class AxelrodObserver(dworp.Observer):
     def __init__(self, printby):
         self.printby = printby
 
-    def init(self, printby):
-        self.printby = printby
-
     def step(self, time, agents, env):
         # A cultural region is defined as a set of contiguous sites with identical cultural features
         # We need to count the cultural regions at desired time-steps
