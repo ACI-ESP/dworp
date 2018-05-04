@@ -62,7 +62,8 @@ class Agent(ABC):
     def step(self, new_time, env):
         """Update the agent's next state
 
-        DO NOT MODIFY self.state in this method!
+        If using a two stage update, do change self.state in this method!
+        Instead, change self.next_state which gets copied to self.state in complete().
 
         Args:
             new_time (int, float): Current time of the simulation
