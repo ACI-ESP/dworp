@@ -181,6 +181,6 @@ env = AxelrodEnvironment(g)
 time = dworp.BasicTime(n_tsteps)
 scheduler = dworp.RandomOrderScheduler(np.random.RandomState())
 observer = AxelrodObserver(100)
-sim = dworp.DoubleStageSimulation(agents, env, time, scheduler, observer)
+sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer)
 
 sim.run()
