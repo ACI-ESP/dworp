@@ -66,6 +66,6 @@ env = WeatherEnvironment(g)
 time = dworp.BasicTime(10)
 scheduler = dworp.BasicScheduler()
 observer = ShortsObserver()
-sim = dworp.DoubleStageSimulation(agents, env, time, scheduler, observer)
+sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer)
 
 sim.run()
