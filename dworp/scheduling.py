@@ -27,6 +27,12 @@ class Time(Iterator):
 class BasicTime(Time):
     """Fixed step size and fixed num of steps
 
+    BasicTime(5) will result in times of 1, 2, 3, 4, 5
+
+    The start time is the time the simulation is initialized.
+    The first time the agents' step() is called will be start + step_size.
+    BasicTime(num_steps=3, start=10) will be 11, 12, 13
+
     Args:
         num_steps (int): Number of time steps in the simulation
         start (int or float, optional): Start time of the simulation
@@ -52,6 +58,10 @@ class BasicTime(Time):
 
 class InfiniteTime(Time):
     """Fixed step size and infinite num of steps
+
+    The start time is the time the simulation is initialized.
+    The first time the agents' step() is called will be start + step_size.
+    InfiniteTime(start=10) will be 11, 12, 13, ...
 
     Args:
         start (int or float, optional): Start time of the simulation
@@ -110,7 +120,7 @@ class Scheduler(ABC):
             env (Environment): environment object
 
         Returns:
-            list of agent indices
+            list of agent indices or iterator over indices
         """
         pass
 
