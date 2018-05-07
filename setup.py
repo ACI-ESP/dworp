@@ -18,7 +18,9 @@ setup(
     ],
     install_requires=[
         'numpy',
-        'matplotlib'
     ],
+    extras_require={
+        'plot': ['matplotlib']
+    },
     python_requires='>=3.5',
 )

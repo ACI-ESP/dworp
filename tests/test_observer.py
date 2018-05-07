@@ -3,7 +3,6 @@ import unittest
 import unittest.mock as mock
 import builtins
 import time
-import matplotlib.pyplot as plt
 
 
 class ChainedObserverTest(unittest.TestCase):
@@ -70,25 +69,15 @@ class KeyPauseObserverTest(unittest.TestCase):
 class PauseObserverTest(unittest.TestCase):
     def setUp(self):
         self.original_sleep = time.sleep
-        self.original_pause = plt.pause
         time.sleep = mock.Mock()
-        plt.pause = mock.Mock()
 
     def tearDown(self):
         time.sleep = self.original_sleep
-        plt.pause = self.original_pause
 
-    def test_matplotlib_flag_default(self):
+    def test_default_params(self):
         obs = PauseObserver(1)
         obs.step(0, [], None)
         self.assertTrue(time.sleep.called)
-        self.assertFalse(plt.pause.called)
-
-    def test_matplotlib_flag_on(self):
-        obs = PauseObserver(1, matplotlib=True)
-        obs.step(0, [], None)
-        self.assertFalse(time.sleep.called)
-        self.assertTrue(plt.pause.called)
 
     def test_start_flag_default(self):
         obs = PauseObserver(1)

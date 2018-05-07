@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
 import time
-import matplotlib.pyplot as plt
 
 
 class Observer(ABC):
@@ -93,17 +92,18 @@ class KeyPauseObserver(Observer):
 class PauseObserver(Observer):
     """Pause for x seconds between each time step
 
+    This does not work with plotting during the simulation.
+    Use dworp.plot.PlotPauseObserver instead.
+
     Args:
         delay (int): Length of delay in seconds
         start (bool): Optionally pause after initialization
         stop (bool): Optionally pause when simulation completes
-        matplotlib (bool): Support plots (default: False)
     """
-    def __init__(self, delay, start=False, stop=False, matplotlib=False):
+    def __init__(self, delay, start=False, stop=False):
         self.delay = delay
         self.start_flag = start
         self.stop_flag = stop
-        self.matplotlib_flag = matplotlib
 
     def start(self, current_time, agents, env):
         if self.start_flag:
@@ -117,7 +117,4 @@ class PauseObserver(Observer):
             self.pause()
 
     def pause(self):
-        if self.matplotlib_flag:
-            plt.pause(self.delay)
-        else:
-            time.sleep(self.delay)
+        time.sleep(self.delay)

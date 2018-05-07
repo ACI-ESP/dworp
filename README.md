@@ -22,6 +22,11 @@ To install in editable model so that changes to the framework are instantly refl
 pip install -e .
 ```
 
+To install with the optional plotting capability:
+```
+pip install .[plot]
+```
+
 Using
 ---------------
 Dworp defines basic interfaces for building simulations and provides some

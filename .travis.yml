@@ -9,9 +9,9 @@ branches:
 
 install:
   - pip install -r requirements.txt
-  - pip install nose
-  - pip install python-coveralls coverage
-  - pip install flake8
+  # required for optional dworp.plot
+  - pip install matplotlib
+  - pip install -r test_requirements.txt
 before_script:
   - flake8 dworp
 script:
