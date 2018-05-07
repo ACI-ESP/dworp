@@ -1,5 +1,6 @@
 import argparse
 import dworp
+import dworp.plot
 import logging
 import matplotlib.colors
 import matplotlib.pyplot as plt
@@ -201,7 +202,7 @@ if __name__ == "__main__":
     observer = dworp.ChainedObserver(
         SegObserver(),
         HeatmapPlotObserver(colors),
-        dworp.PauseObserver(delay=1, start=True, matplotlib=True)
+        dworp.plot.PlotPauseObserver(delay=1, start=True)
     )
     sim = SegregationSimulation(params, observer)
     sim.run()
