@@ -108,6 +108,11 @@ To run the tests, use pip to install nose (pip install nose) and then in the bas
 nosetests
 ```
 
+To get a report on unit test coverage:
+```bash
+nosetests --with-coverage --cover-package=dworp
+```
+
 Development
 -----------
 The code mostly follows the [PEP8 coding standard](https://www.python.org/dev/peps/pep-0008/).
