@@ -9,12 +9,16 @@ branches:
 
 install:
   - pip install -r requirements.txt
-  # required for optional dworp.plot
+  # matplotlib required for optional dworp.plot
   - pip install matplotlib
   - pip install -r test_requirements.txt
 before_script:
   - flake8 dworp
 script:
-  - nosetests --with-coverage
+  # only run coverage tests on a single build
+  - export RUN_COVERAGE=0
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then export RUN_COVERAGE=1; fi
+  - if [[ $RUN_COVERAGE == 1 ]]; then nosetests --with-coverage; fi
+  - if [[ $RUN_COVERAGE == 0 ]]; then nosetests; fi
 after_success:
-  - coveralls
+  - if [[ $RUN_COVERAGE == 1 ]]; then coveralls; fi
