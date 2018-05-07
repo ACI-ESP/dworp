@@ -20,9 +20,10 @@ class Environment(ABC):
         else:
             self.state = None
 
-    @abstractmethod
     def init(self, start_time):
         """Initialize the environment's state
+
+        Implement for any initialization that requires knowledge of the start time.
 
         Args:
             start_time (int, float): Start time of the environment
@@ -37,6 +38,15 @@ class Environment(ABC):
             new_time (int, float): Current time of the simulation
             agents (list): list of Agent objects
         """
+        pass
+
+
+class NullEnvironment(Environment):
+    """Empty environment"""
+    def __init__(self):
+        super().__init__(0)
+
+    def step(self, new_time, agents):
         pass
 
 
