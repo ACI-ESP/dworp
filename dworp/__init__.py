@@ -1,4 +1,4 @@
-from .agent import Agent, IdentifierHelper
+from .agent import Agent, SelfNamingAgent, TwoStageAgent, IdentifierHelper
 from .environment import Environment, NetworkEnvironment, Grid
 from .observer import Observer, ChainedObserver, KeyPauseObserver, PauseObserver
 from .scheduling import Time, BasicTime, InfiniteTime, Terminator

@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 
-class CollegeStudent(dworp.Agent):
+class CollegeStudent(dworp.TwoStageAgent):
     SHORTS = 0
 
     def __init__(self, vertex):
