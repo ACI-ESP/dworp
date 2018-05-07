@@ -204,33 +204,25 @@ class AxelrodTerminator():
             return terminate
 
 
-# class AxelrodTwoStageSimWithResult(dworp.TwoStageSimulation):
-#     """This version has a result variable
-#     """
-#     logger = logging.getLogger(__name__)
-#
-#     def __init__(self, agents, env, time, scheduler, observer, terminator=None):
-#         super().__init__(agents, env, time, scheduler, observer, terminator, True)
-#         self.numregions = 0
 
+if False:
+    logging.basicConfig(level=logging.WARN)
+    # ensuring reproducibility by setting the seed
+    np.random.seed(34756)
+    xdim = 10
+    ydim = 10
+    n_tsteps = 8000 # because we cycle through the 100 sites each time, this represents 80K events
+    g = igraph.Graph.Lattice([xdim,ydim], nei=1, directed=False, circular=False)
+    agents = [Site(v) for v in g.vs]
+    env = AxelrodEnvironment(g)
+    time = dworp.BasicTime(n_tsteps)
+    # ensuring reproducibility by setting the seed
+    scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
+    observer = AxelrodObserver(1000)
+    term = AxelrodTerminator(1000)
+    sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer,terminator=term)
 
-logging.basicConfig(level=logging.WARN)
-# ensuring reproducibility by setting the seed
-np.random.seed(34756)
-xdim = 10
-ydim = 10
-n_tsteps = 8000 # because we cycle through the 100 sites each time, this represents 80K events
-g = igraph.Graph.Lattice([xdim,ydim], nei=1, directed=False, circular=False)
-agents = [Site(v) for v in g.vs]
-env = AxelrodEnvironment(g)
-time = dworp.BasicTime(n_tsteps)
-# ensuring reproducibility by setting the seed
-scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-observer = AxelrodObserver(1000)
-term = AxelrodTerminator(1000)
-sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer,terminator=term)
+    sim.run()
 
-sim.run()
-
-lastcount = observer.computenumregions(0,agents,env)
-print("Last Count = %d" % (lastcount))
+    lastcount = observer.computenumregions(0,agents,env)
+    print("Last Count = %d" % (lastcount))
