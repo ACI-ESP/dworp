@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from .scheduling import NullTerminator
+from .time import NullTerminator
 
 
 class Simulation(ABC):

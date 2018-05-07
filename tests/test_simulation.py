@@ -1,7 +1,8 @@
 from dworp.simulation import *
 import unittest
 import unittest.mock as mock
-from dworp.scheduling import Terminator, BasicScheduler, BasicTime
+from dworp.scheduling import BasicScheduler
+from dworp.time import Terminator, BasicTime
 
 
 class FixedTerminator(Terminator):
