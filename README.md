@@ -8,23 +8,17 @@ Flexible framework for building agent-based modeling simulations.
 Requirements
 --------------
  * python 3
- * python packages as listed in requirements.txt
 
 Installation
 --------------
-Install using pip:
+Install using pip (maybe be pip3 on some platforms):
 ```
-pip install .
-```
-
-To install in editable model so that changes to the framework are instantly reflected:
-```
-pip install -e .
+pip install dworp
 ```
 
 To install with the optional plotting capability:
 ```
-pip install .[plot]
+pip install dworp[plot]
 ```
 
 Using
@@ -115,6 +109,11 @@ nosetests --with-coverage --cover-package=dworp
 
 Development
 -----------
+To install in editable model so that changes to the framework are instantly reflected:
+```
+pip install -e .
+```
+
 The code mostly follows the [PEP8 coding standard](https://www.python.org/dev/peps/pep-0008/).
 If you are using PyCharm, it will highlight PEP8 issues.
 You can also manually run style checks with flake8 (pip install flake8):
