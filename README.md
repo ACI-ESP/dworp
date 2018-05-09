@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/ACI-ESP/dworp.svg)](https://travis-ci.org/ACI-ESP/dworp)
 [![Coverage Status](https://img.shields.io/coveralls/github/ACI-ESP/dworp.svg)](https://coveralls.io/github/ACI-ESP/dworp)
+[![PyPI version](https://badge.fury.io/py/dworp.svg)](https://badge.fury.io/py/dworp)
 
 Dworp
 =============
