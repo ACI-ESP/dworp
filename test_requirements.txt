@@ -1,4 +1,3 @@
 nose
-python-coveralls
 coverage
 flake8
