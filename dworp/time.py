@@ -17,17 +17,11 @@ class Time(Iterator):
       time_gen = MyTime()
       for t in time_gen:
           print(t)
+
+    Attributes:
+        start_time (int or float): Start time of the simulation
     """
     logger = logging.getLogger(__name__)
-
-    @abstractmethod
-    def get_start_time(self):
-        """Get the start time of the simulation
-
-        Returns:
-            int or float
-        """
-        pass
 
 
 class BasicTime(Time):
@@ -50,9 +44,6 @@ class BasicTime(Time):
         self.num_steps = num_steps
         self.step_size = step_size
         self.step_count = 0
-
-    def get_start_time(self):
-        return self.start_time
 
     def __next__(self):
         self.step_count += 1
@@ -77,9 +68,6 @@ class InfiniteTime(Time):
         self.start_time = start
         self.time = start
         self.step_size = step_size
-
-    def get_start_time(self):
-        return self.start_time
 
     def __next__(self):
         self.time += self.step_size

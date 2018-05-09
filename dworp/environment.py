@@ -27,7 +27,7 @@ class Environment(ABC):
     def init(self, start_time):
         """Initialize the environment's state
 
-        Implement for any initialization that requires knowledge of the start time.
+        Implement method for any initialization that requires knowledge of the start time.
 
         Args:
             start_time (int, float): Start time of the environment
@@ -37,6 +37,17 @@ class Environment(ABC):
     @abstractmethod
     def step(self, new_time, agents):
         """Update the environment's state
+
+        Args:
+            new_time (int, float): Current time of the simulation
+            agents (list): list of Agent objects
+        """
+        pass
+
+    def complete(self, new_time, agents):
+        """Complete a time step
+
+        Implement this if you need to perform any operations at end of time step.
 
         Args:
             new_time (int, float): Current time of the simulation
