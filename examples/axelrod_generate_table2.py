@@ -1,5 +1,3 @@
-__author__ = 'schmiac1'
-
 """
 Aurora is using axelrod_aurora_test1 to reproduce Table 2 from the Axelrod paper.
 """

@@ -17,7 +17,7 @@ class Person(dworp.SelfNamingAgent):
         # probability that an additional child is born
         self.additional_birth_probability = fertility - self.min_children
 
-    def step(self, new_time, env):
+    def step(self, now, env):
         # reproduce and return children
         num_children = self.min_children
         if self.rng.uniform() < self.additional_birth_probability:
@@ -28,12 +28,12 @@ class Person(dworp.SelfNamingAgent):
 class BirthObserver(dworp.Observer):
     """Writes simulation state to stdout"""
     def start(self, time, agents, env):
-        print("Starting: {} red\t{} blue".format(*self.get_counts(agents)))
+        self.step(time, agents, env)
 
-    def step(self, time, agents, env):
-        print("Step {}: {} red\t{} blue".format(time, *self.get_counts(agents)))
+    def step(self, now, agents, env):
+        print("Step {}: {} red\t{} blue".format(now, *self.get_counts(agents)))
 
-    def done(self, agents, env):
+    def stop(self, now, agents, env):
         print("Ending: only {} people left".format(agents[0].color))
 
     @staticmethod
@@ -45,7 +45,7 @@ class BirthObserver(dworp.Observer):
 
 class BirthTerminator(dworp.Terminator):
     """Stop when only one people color is left"""
-    def test(self, time, agents, env):
+    def test(self, now, agents, env):
         return 0 in BirthObserver.get_counts(agents)
 
 
@@ -78,6 +78,7 @@ class BirthSimulation(dworp.BasicSimulation):
 
     def run(self):
         self.observer.start(self.time.start_time, self.agents, self.env)
+        current_time = 0
         for current_time in self.time:
             self.env.step(current_time, self.agents)
             schedule = self.scheduler.step(current_time, self.agents, self.env)
@@ -90,7 +91,7 @@ class BirthSimulation(dworp.BasicSimulation):
             self.observer.step(current_time, self.agents, self.env)
             if self.terminator.test(current_time, self.agents, self.env):
                 break
-        self.observer.done(self.agents, self.env)
+        self.observer.stop(current_time, self.agents, self.env)
 
     def reap(self):
         """Kill people if in excess of carrying capacity"""

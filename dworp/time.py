@@ -79,12 +79,12 @@ class Terminator(ABC):
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def test(self, time, agents, env):
+    def test(self, now, agents, env):
         """
         Return True to stop the simulation
 
         Args:
-            time: (int or float): current time of the simulation
+            now: (int, float): current time of the simulation
             agents (list): list of Agent objects
             env: (Environment): environment object
 
@@ -95,5 +95,5 @@ class Terminator(ABC):
 
 class NullTerminator(Terminator):
     """Never terminate!"""
-    def test(self, time, agents, env):
+    def test(self, now, agents, env):
         return False

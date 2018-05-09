@@ -24,33 +24,33 @@ class Environment(ABC):
         else:
             self.state = None
 
-    def init(self, start_time):
+    def init(self, now):
         """Initialize the environment's state
 
         Implement method for any initialization that requires knowledge of the start time.
 
         Args:
-            start_time (int, float): Start time of the environment
+            now (int, float): Start time of the environment
         """
         pass
 
     @abstractmethod
-    def step(self, new_time, agents):
+    def step(self, now, agents):
         """Update the environment's state
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             agents (list): list of Agent objects
         """
         pass
 
-    def complete(self, new_time, agents):
+    def complete(self, now, agents):
         """Complete a time step
 
         Implement this if you need to perform any operations at end of time step.
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             agents (list): list of Agent objects
         """
         pass
@@ -61,7 +61,7 @@ class NullEnvironment(Environment):
     def __init__(self):
         super().__init__(0)
 
-    def step(self, new_time, agents):
+    def step(self, now, agents):
         pass
 
 

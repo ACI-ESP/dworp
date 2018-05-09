@@ -14,11 +14,11 @@ class Scheduler(ABC):
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         """ Get the next step in schedule
 
         Args:
-            time (int or float): current time of the simulation
+            now (int, float): current time of the simulation
             agents (list): list of Agent objects
             env (Environment): environment object
 
@@ -30,7 +30,7 @@ class Scheduler(ABC):
 
 class BasicScheduler(Scheduler):
     """Schedules all agents in the order of the agents list"""
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         return range(len(agents))
 
 
@@ -43,7 +43,7 @@ class RandomOrderScheduler(Scheduler):
     def __init__(self, rng):
         self.rng = rng
 
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         return self.rng.permutation(len(agents))
 
 
@@ -58,5 +58,5 @@ class RandomSampleScheduler(Scheduler):
         self.size = size
         self.rng = rng
 
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         return self.rng.permutation(len(agents))[:self.size]

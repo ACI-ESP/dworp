@@ -14,7 +14,7 @@ class FixedTerminator(Terminator):
         self.num_steps = num_steps
         self.count = 0
 
-    def test(self, time, agents, env):
+    def test(self, now, agents, env):
         self.count += 1
         return self.count == self.num_steps
 

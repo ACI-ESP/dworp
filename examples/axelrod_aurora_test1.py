@@ -1,5 +1,3 @@
-__author__ = 'schmiac1'
-
 """
 Aurora's Attempt to quickly implement Axelrod model of...
 
@@ -39,13 +37,12 @@ class Site(dworp.TwoStageAgent):
         self.vertex = vertex
         self.numtraits = numtraitsper
 
-    def init(self, start_time, env):
-        #self.state.fill(0)
+    def init(self, now, env):
         for i in range(0,len(self.state)):
             self.state[i] = float(np.random.randint(0,high=self.numtraits))
 
     # note to aurora: you need to modify next_state here!
-    def step(self, new_time, env):
+    def step(self, now, env):
         # start by initializing next_state to the current state
         for i in range(0,len(self.state)):
             self.next_state[i] = self.state[i]
@@ -90,11 +87,10 @@ class AxelrodEnvironment(dworp.NetworkEnvironment):
     def __init__(self, network):
         super().__init__(1, network)
 
-    def init(self, start_time):
+    def init(self, now):
         self.state.fill(0)
 
-    def step(self, new_time, agents):
-        #self.state[self.TEMP] = np.random.randint(self.MIN_TEMP, self.MAX_TEMP)
+    def step(self, now, agents):
         self.logger.info("AxelrodEnvironment did not need to update")
 
 
@@ -157,28 +153,26 @@ class AxelrodObserver(dworp.Observer):
             count = count + len(curval)
         return count
 
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         # A cultural region is defined as a set of contiguous sites with identical cultural features
         # We need to count the cultural regions at desired time-steps
         #           (you may not want to do this expensive computation every time)
-        if time % self.printby == 0:
-            count = self.computenumregions(time, agents, env)
-            print("{}: we have {} cultural regions".format(time,count))
+        if now % self.printby == 0:
+            count = self.computenumregions(now, agents, env)
+            print("{}: we have {} cultural regions".format(now, count))
 
-    def done(self, agents, env):
+    def complete(self, now, agents, env):
         print("Simulation over")
 
 
-
-# if self.terminator.test(current_time, self.agents, self.env):
-class AxelrodTerminator():
+class AxelrodTerminator(dworp.Terminator):
     def __init__(self, printby):
         self.printby = printby
 
-    def test(self, current_time, agents, env):
+    def test(self, now, agents, env):
         # no more changes can happen when all neighboring sites either no features in common or all features in common
         # make sure you only check this when current_time modulo printby == 0 (otherwise too much computation)
-        if current_time % self.printby != 0:
+        if now % self.printby != 0:
             return False
         else:
             found_pair_that_can_change = False
@@ -200,9 +194,8 @@ class AxelrodTerminator():
                     break
             terminate = not found_pair_that_can_change # dont terminate if you found change could happen
             if terminate:
-                print("Terminating simulation early at time = {} because no neighboring agents can change".format(current_time))
+                print("Terminating simulation early at time = {} because no neighboring agents can change".format(now))
             return terminate
-
 
 
 if False:

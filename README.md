@@ -28,7 +28,7 @@ Dworp defines basic interfaces for building simulations and provides some
 default components to support rapid creation of agent-based models.
 
 ### Agent
-An agent updates its state in the `step()` function.
+An `Agent` updates its state in the `step()` function.
 The update may depend on the environment, its neighbors, past history, or other features.
 
 An agent has two optional functions `init()` and `complete()`.
@@ -37,7 +37,7 @@ The `complete()` function is called at the end of a time step.
 
 ```python
 class MyAgent(dworp.Agent):
-    def step(self, new_time, env):
+    def step(self, now, env):
         # ToDo add example here
         pass
 ```
@@ -50,12 +50,12 @@ cannot see the new state.
 In the second stage, the agents make that state public to prepare for the next time step.
 
 ### Environment
-The environment captures all simulation state that does not live in the agents.
+The `Environment` captures all simulation state that does not live in the agents.
 This includes serving as a container for network or spatial information for determining neighbors.
 
 ### Time
-Time drives the simulation and implements an iterator interface.
-Time can be fixed in length or infinite.
+`Time` drives the simulation and implements an iterator interface.
+It can be fixed in length or infinite.
 Time steps can be fixed in length or variable.
 Time can be integer or floating point.
 
@@ -95,6 +95,8 @@ or at the individual component level:
 ```python
     logging.getLogger('dworp.agent').setLevel(logging.DEBUG)
 ```
+
+For more information on log levels or log configuration, read the [python logging docs](https://docs.python.org/3/library/logging.html).
 
 Examples
 ------------

@@ -16,7 +16,7 @@ class IdentifierHelperTest(unittest.TestCase):
 
 class AgentTest(unittest.TestCase):
     class MockAgent(Agent):
-        def step(self, new_time, env):
+        def step(self, now, env):
             pass
 
     def test_creation_with_size(self):
@@ -30,7 +30,7 @@ class AgentTest(unittest.TestCase):
 
 class SelfNamingAgentTest(unittest.TestCase):
     class MockAgent(SelfNamingAgent):
-        def step(self, new_time, env):
+        def step(self, now, env):
             pass
 
     def test_id(self):
@@ -42,7 +42,7 @@ class SelfNamingAgentTest(unittest.TestCase):
 
 class TwoStageAgentTest(unittest.TestCase):
     class MockAgent(TwoStageAgent):
-        def step(self, new_time, env):
+        def step(self, now, env):
             self.next_state[1] = 42
 
     def test_state_switch_on_complete(self):
