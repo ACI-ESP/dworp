@@ -2,7 +2,7 @@ from setuptools import setup
 
 __author__ = 'Cash Costello'
 __email__ = 'cash.costello@jhuapl.edu'
-__version__ = '0.1.0'
+__version__ = '0.2.0.dev'
 
 setup(
     name='dworp',
