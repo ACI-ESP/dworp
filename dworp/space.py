@@ -27,8 +27,8 @@ class Grid:
         """Does anyone live here"""
         return self.data[x, y] is not None
 
-    def set(self, agent, x, y):
-        """Place an agent here
+    def add(self, agent, x, y):
+        """Add an agent at the specified location
         Does not check if anyone else lives here first!
         """
         self.data[x, y] = agent
@@ -47,7 +47,7 @@ class Grid:
         """
         agent = self.get(x1, y1)
         self.remove(x1, y1)
-        self.set(agent, x2, y2)
+        self.data[x2, y2] = agent
 
     def neighbors(self, x, y):
         """Get the neighbor agents of this location

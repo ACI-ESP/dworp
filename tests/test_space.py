@@ -14,7 +14,7 @@ class GridTest(unittest.TestCase):
 
     def test_occupied(self):
         grid = Grid(10, 10)
-        grid.set(mock.Mock(), 3, 2)
+        grid.add(mock.Mock(), 3, 2)
 
         self.assertTrue(grid.occupied(3, 2))
         self.assertFalse(grid.occupied(2, 3))
@@ -22,7 +22,7 @@ class GridTest(unittest.TestCase):
     def test_move(self):
         agent = mock.Mock()
         grid = Grid(10, 10)
-        grid.set(agent, 3, 5)
+        grid.add(agent, 3, 5)
         grid.move(3, 5, 8, 1)
         self.assertFalse(grid.occupied(3, 5))
         self.assertTrue(grid.occupied(8, 1))
@@ -31,9 +31,9 @@ class GridTest(unittest.TestCase):
     def test_neighbors_edge_case(self):
         grid = Grid(10, 10)
         neighbors = [mock.Mock(), mock.Mock()]
-        grid.set(neighbors[0], 0, 0)
-        grid.set(neighbors[1], 1, 2)
-        grid.set(mock.Mock(), 2, 1)
+        grid.add(neighbors[0], 0, 0)
+        grid.add(neighbors[1], 1, 2)
+        grid.add(mock.Mock(), 2, 1)
 
         n = grid.neighbors(0, 1)
 

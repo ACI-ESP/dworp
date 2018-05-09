@@ -171,7 +171,7 @@ class SegregationSimulation(dworp.TwoStageSimulation):
             for y in range(params.grid_height):
                 if self.rng.uniform() < params.density:
                     agent = factory.create(x, y)
-                    grid.set(agent, x, y)
+                    grid.add(agent, x, y)
                     agents.append(agent)
 
         super().__init__(agents, env, time, scheduler, observer, terminator)
