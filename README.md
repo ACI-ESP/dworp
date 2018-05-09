@@ -20,6 +20,7 @@ To install with the optional plotting capability:
 ```bash
 pip install dworp[plot]
 ```
+This will install dependencies required by `dworp.plot` (currently only matplotlib).
 
 Using
 ---------------
@@ -109,6 +110,12 @@ Then to run the tests (while in the base directory):
 
 ```bash
 nosetests
+```
+
+This will run all the tests.
+To skip the plotting unit tests which require matplotlib, do this:
+```bash
+nosetests -a '!plot'
 ```
 
 To get a report on unit test coverage:
