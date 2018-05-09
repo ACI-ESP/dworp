@@ -12,14 +12,15 @@ Requirements
 Installation
 --------------
 Install using pip (maybe be pip3 on some platforms):
-```
+```bash
 pip install dworp
 ```
 
 To install with the optional plotting capability:
-```
+```bash
 pip install dworp[plot]
 ```
+This will install dependencies required by `dworp.plot` (currently only matplotlib).
 
 Using
 ---------------
@@ -101,10 +102,20 @@ The best way to learn the framework is by looking at the example models and thei
 
 Testing
 -------------
-To run the tests, use pip to install nose (pip install nose) and then in the base directory run:
+Install the test requirements:
+```bash
+pip install -r test_requirements.txt
+```
+Then to run the tests (while in the base directory):
 
 ```bash
 nosetests
+```
+
+This will run all the tests.
+To skip the plotting unit tests which require matplotlib, do this:
+```bash
+nosetests -a '!plot'
 ```
 
 To get a report on unit test coverage:
@@ -115,7 +126,7 @@ nosetests --with-coverage --cover-package=dworp
 Development
 -----------
 To install in editable model so that changes to the framework are instantly reflected:
-```
+```bash
 pip install -e .
 ```
 

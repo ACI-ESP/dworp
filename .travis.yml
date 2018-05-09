@@ -12,6 +12,7 @@ install:
   # matplotlib required for optional dworp.plot
   - pip install matplotlib
   - pip install -r test_requirements.txt
+  - pip install python-coveralls
 before_script:
   - flake8 dworp
 script:

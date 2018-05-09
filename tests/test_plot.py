@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 
 
 class PlotPauseObserverTest(unittest.TestCase):
+    # let developers filter the plotting tests
+    plot = True
+
     def setUp(self):
         self.original_pause = plt.pause
         plt.pause = mock.Mock()
