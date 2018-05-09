@@ -53,7 +53,10 @@ class ChainedObserver(Observer):
         *observers: Variable length arguments of Observer objects
     """
     def __init__(self, *observers):
-        self.observers = observers
+        self.observers = list(observers)
+
+    def append(self, observer):
+        self.observers.append(observer)
 
     def start(self, time, agents, env):
         for observer in self.observers:

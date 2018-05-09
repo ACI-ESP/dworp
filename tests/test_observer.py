@@ -40,6 +40,17 @@ class ChainedObserverTest(unittest.TestCase):
         self.assertEqual([mock.call.stop([], None)], obs1.mock_calls)
         self.assertEqual([mock.call.stop([], None)], obs2.mock_calls)
 
+    def test_append(self):
+        obs1 = mock.create_autospec(spec=Observer)
+        obs2 = mock.create_autospec(spec=Observer)
+        obs = ChainedObserver(obs1)
+        obs.append(obs2)
+
+        obs.step(1, [], None)
+
+        self.assertEqual([mock.call.step(1, [], None)], obs1.mock_calls)
+        self.assertEqual([mock.call.step(1, [], None)], obs2.mock_calls)
+
 
 class KeyPauseObserverTest(unittest.TestCase):
     def setUp(self):
