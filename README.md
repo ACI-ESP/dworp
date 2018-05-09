@@ -58,6 +58,11 @@ Time can be fixed in length or infinite.
 Time steps can be fixed in length or variable.
 Time can be integer or floating point.
 
+### Space
+Agents can observe or interact with other agents based on neighborhoods.
+A neighborhood may be defined on a network using various graph frameworks like igraph or snap.
+A neighborhood can also be spatially defined on a grid or continuous space.
+
 ### Terminator
 To stop the simulation when some condition is met, use a `Terminator`.
 

@@ -59,7 +59,7 @@ class BasicSimulation(Simulation):
             self.observer.step(current_time, self.agents, self.env)
             if self.terminator.test(current_time, self.agents, self.env):
                 break
-        self.observer.done(self.agents, self.env)
+        self.observer.stop(self.agents, self.env)
 
     def _update_agents_one_stage(self, current_time, schedule):
         for index in schedule:

@@ -27,7 +27,7 @@ class Environment(ABC):
     def init(self, start_time):
         """Initialize the environment's state
 
-        Implement for any initialization that requires knowledge of the start time.
+        Implement method for any initialization that requires knowledge of the start time.
 
         Args:
             start_time (int, float): Start time of the environment
@@ -37,6 +37,17 @@ class Environment(ABC):
     @abstractmethod
     def step(self, new_time, agents):
         """Update the environment's state
+
+        Args:
+            new_time (int, float): Current time of the simulation
+            agents (list): list of Agent objects
+        """
+        pass
+
+    def complete(self, new_time, agents):
+        """Complete a time step
+
+        Implement this if you need to perform any operations at end of time step.
 
         Args:
             new_time (int, float): Current time of the simulation
@@ -64,60 +75,3 @@ class NetworkEnvironment(Environment):
     def __init__(self, size, network):
         super().__init__(size)
         self.network = network
-
-
-class Grid:
-    """Two dimension grid that agents live on
-
-    Only one agent per grid location.
-    Zero-based indexing.
-
-    Args:
-        width (int): width of the grid (x dimension)
-        height (int): height of the grid (y dimension)
-    """
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.data = np.empty(shape=(width, height), dtype=object)
-
-    def occupied(self, x, y):
-        """Does anyone live here"""
-        return self.data[x, y] is not None
-
-    def set(self, agent, x, y):
-        """Place an agent here
-        Does not check if anyone else lives here first!
-        """
-        self.data[x, y] = agent
-
-    def get(self, x, y):
-        """Get the current agent that lives here (or None)"""
-        return self.data[x, y]
-
-    def remove(self, x, y):
-        """Remove the agent from here"""
-        self.data[x, y] = None
-
-    def move(self, x1, y1, x2, y2):
-        """Move an agent from location 1 to location 2
-        Does not check if anyone lives at location 2!
-        """
-        agent = self.get(x1, y1)
-        self.remove(x1, y1)
-        self.set(agent, x2, y2)
-
-    def neighbors(self, x, y):
-        """Get the neighbor agents of this location
-
-        Returns:
-            list of agents
-        """
-        neighbors = []
-        positions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-        for position in positions:
-            x1 = x + position[0]
-            y1 = y + position[1]
-            if 0 <= x1 < self.width and 0 <= y1 < self.height and self.occupied(x1, y1):
-                neighbors.append(self.data[x1, y1])
-        return neighbors

@@ -36,8 +36,8 @@ class Observer(ABC):
         """
         pass
 
-    def done(self, agents, env):
-        """Run the observer one last time when the simulation is complete
+    def stop(self, agents, env):
+        """Run the observer one last time when the simulation has stopped
 
         Args:
             agents (list): List of agents in the simulation
@@ -63,9 +63,9 @@ class ChainedObserver(Observer):
         for observer in self.observers:
             observer.step(time, agents, env)
 
-    def done(self, agents, env):
+    def stop(self, agents, env):
         for observer in self.observers:
-            observer.done(agents, env)
+            observer.stop(agents, env)
 
 
 class KeyPauseObserver(Observer):
@@ -88,7 +88,7 @@ class KeyPauseObserver(Observer):
     def step(self, time, agents, env):
         input(self.message)
 
-    def done(self, agents, env):
+    def stop(self, agents, env):
         if self.stop_flag:
             input(self.message)
 
@@ -116,7 +116,7 @@ class PauseObserver(Observer):
     def step(self, time, agents, env):
         self.pause()
 
-    def done(self, agents, env):
+    def stop(self, agents, env):
         if self.stop_flag:
             self.pause()
 

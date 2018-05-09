@@ -3,8 +3,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 from .agent import Agent, SelfNamingAgent, TwoStageAgent, IdentifierHelper
-from .environment import Environment, NullEnvironment, NetworkEnvironment, Grid
+from .environment import Environment, NullEnvironment, NetworkEnvironment
 from .observer import Observer, ChainedObserver, KeyPauseObserver, PauseObserver
 from .scheduling import Scheduler, BasicScheduler, RandomOrderScheduler, RandomSampleScheduler
 from .simulation import Simulation, BasicSimulation, TwoStageSimulation
+from .space import Grid
 from .time import Time, BasicTime, InfiniteTime, Terminator
