@@ -125,3 +125,21 @@ class PauseObserver(Observer):
 
     def pause(self):
         time.sleep(self.delay)
+
+
+class PauseAtEndObserver(Observer):
+    """Pause for x seconds at the end of the simulation
+
+    This is useful if you want to keep a plot up on the screen.
+
+    Args:
+        delay (int): Length of delay in seconds
+    """
+    def __init__(self, delay):
+        self.delay = delay
+
+    def step(self, time, agents, env):
+        pass
+
+    def stop(self, agents, env):
+        time.sleep(self.delay)

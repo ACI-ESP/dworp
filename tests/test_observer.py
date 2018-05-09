@@ -113,3 +113,17 @@ class PauseObserverTest(unittest.TestCase):
         obs = PauseObserver(1, stop=True)
         obs.stop([], None)
         self.assertTrue(time.sleep.called)
+
+
+class PauseAtEndObserverTest(unittest.TestCase):
+    def setUp(self):
+        self.original_sleep = time.sleep
+        time.sleep = mock.Mock()
+
+    def tearDown(self):
+        time.sleep = self.original_sleep
+
+    def test(self):
+        obs = PauseAtEndObserver(1)
+        obs.stop([], None)
+        self.assertTrue(time.sleep.called)

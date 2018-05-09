@@ -219,6 +219,7 @@ if __name__ == "__main__":
         SegObserver(),
     )
     if vis_flag:
+        observer.append(dworp.PauseAtEndObserver(3))
         observer.append(PyGameRenderer(grid_size, 10, args.fps))
     sim = SegregationSimulation(params, observer)
     sim.run()
