@@ -40,6 +40,17 @@ class ChainedObserverTest(unittest.TestCase):
         self.assertEqual([mock.call.stop([], None)], obs1.mock_calls)
         self.assertEqual([mock.call.stop([], None)], obs2.mock_calls)
 
+    def test_append(self):
+        obs1 = mock.create_autospec(spec=Observer)
+        obs2 = mock.create_autospec(spec=Observer)
+        obs = ChainedObserver(obs1)
+        obs.append(obs2)
+
+        obs.step(1, [], None)
+
+        self.assertEqual([mock.call.step(1, [], None)], obs1.mock_calls)
+        self.assertEqual([mock.call.step(1, [], None)], obs2.mock_calls)
+
 
 class KeyPauseObserverTest(unittest.TestCase):
     def setUp(self):
@@ -100,5 +111,19 @@ class PauseObserverTest(unittest.TestCase):
 
     def test_stop_flag_on(self):
         obs = PauseObserver(1, stop=True)
+        obs.stop([], None)
+        self.assertTrue(time.sleep.called)
+
+
+class PauseAtEndObserverTest(unittest.TestCase):
+    def setUp(self):
+        self.original_sleep = time.sleep
+        time.sleep = mock.Mock()
+
+    def tearDown(self):
+        time.sleep = self.original_sleep
+
+    def test(self):
+        obs = PauseAtEndObserver(1)
         obs.stop([], None)
         self.assertTrue(time.sleep.called)

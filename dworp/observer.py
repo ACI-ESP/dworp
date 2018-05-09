@@ -53,7 +53,10 @@ class ChainedObserver(Observer):
         *observers: Variable length arguments of Observer objects
     """
     def __init__(self, *observers):
-        self.observers = observers
+        self.observers = list(observers)
+
+    def append(self, observer):
+        self.observers.append(observer)
 
     def start(self, time, agents, env):
         for observer in self.observers:
@@ -121,4 +124,22 @@ class PauseObserver(Observer):
             self.pause()
 
     def pause(self):
+        time.sleep(self.delay)
+
+
+class PauseAtEndObserver(Observer):
+    """Pause for x seconds at the end of the simulation
+
+    This is useful if you want to keep a plot up on the screen.
+
+    Args:
+        delay (int): Length of delay in seconds
+    """
+    def __init__(self, delay):
+        self.delay = delay
+
+    def step(self, time, agents, env):
+        pass
+
+    def stop(self, agents, env):
         time.sleep(self.delay)
