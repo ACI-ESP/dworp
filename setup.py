@@ -24,10 +24,10 @@ setup(
     python_requires='>=3.5',
     keywords='agents ABM modeling simulation agent-based',
     classifiers=[
-        'Development Status :: 3 - Alpha'
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
-        'Natural Language :: English'
+        'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Scientific/Engineering',
