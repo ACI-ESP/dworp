@@ -8,7 +8,7 @@ import unittest
 
 class EnvironmentTest(unittest.TestCase):
     class MockEnvironment(Environment):
-        def step(self, new_time, agents):
+        def step(self, now, agents):
             pass
 
     def test_creation_with_size(self):

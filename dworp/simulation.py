@@ -49,6 +49,7 @@ class BasicSimulation(Simulation):
     def run(self):
         """Run the realization to completion"""
         self.observer.start(self.time.start_time, self.agents, self.env)
+        current_time = 0
         for current_time in self.time:
             self.env.step(current_time, self.agents)
             schedule = self.scheduler.step(current_time, self.agents, self.env)
@@ -56,10 +57,11 @@ class BasicSimulation(Simulation):
                 self._update_agents_two_stage(current_time, schedule)
             else:
                 self._update_agents_one_stage(current_time, schedule)
+            self.env.complete(current_time, self.agents)
             self.observer.step(current_time, self.agents, self.env)
             if self.terminator.test(current_time, self.agents, self.env):
                 break
-        self.observer.stop(self.agents, self.env)
+        self.observer.stop(current_time, self.agents, self.env)
 
     def _update_agents_one_stage(self, current_time, schedule):
         for index in schedule:

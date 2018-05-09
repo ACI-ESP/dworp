@@ -49,7 +49,7 @@ class Agent(ABC):
         else:
             self.state = None
 
-    def init(self, start_time, env):
+    def init(self, now, env):
         """Initialize the agent's state
 
         Use this if initialization requires access to data not available when the agent is constructed.
@@ -57,31 +57,31 @@ class Agent(ABC):
         You can add additional arguments in your implementation (when using your own Simulation class).
 
         Args:
-            start_time (int, float): Start time of the agent (usually the same as simulation)
+            now (int, float): Start time of the agent (usually the same as simulation)
             env (Environment): environment object
         """
         pass
 
     @abstractmethod
-    def step(self, new_time, env):
+    def step(self, now, env):
         """Update the agent's state
 
         The Environment is mutable and can be changed by the agent.
         You should think carefully about how agents change it due to update order/conflicts.
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             env (Environment): environment object
         """
         pass
 
-    def complete(self, new_time, env):
+    def complete(self, now, env):
         """Complete a time step
 
         Implement this if you need an agent to perform any operations at end of time step.
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             env (Environment): environment object
         """
         pass
@@ -126,25 +126,25 @@ class TwoStageAgent(Agent):
         self.next_state = np.zeros(size, dtype='f')
 
     @abstractmethod
-    def step(self, new_time, env):
+    def step(self, now, env):
         """Update the agent's next state
 
         Only change self.next_state in this method!
         Later self.next_state is copied to self.state in complete().
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             env (Environment): environment object
         """
         pass
 
-    def complete(self, new_time, env):
+    def complete(self, now, env):
         """Complete a time step
 
         This copies the next state to current state.
 
         Args:
-            new_time (int, float): Current time of the simulation
+            now (int, float): Current time of the simulation
             env (Environment): environment object
         """
         # Could replace with reference swap

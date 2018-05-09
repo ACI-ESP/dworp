@@ -215,13 +215,13 @@ class PyGameRenderer(dworp.Observer):
         self.background = self.background.convert()
         self.clock = pygame.time.Clock()
 
-    def start(self, time, agents, env):
+    def start(self, now, agents, env):
         self.draw(agents)
 
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         self.draw(agents)
 
-    def done(self, agents, env):
+    def stop(self, now, agents, env):
         pygame.quit()
 
     def draw(self, agents):

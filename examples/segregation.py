@@ -25,14 +25,14 @@ class Household(dworp.Agent):
         return "Household({}, {}, ({},{}), happy={})".format(
             self.agent_id, self.color, self.x, self.y, self.happy)
 
-    def init(self, start_time, env):
+    def init(self, now, env):
         self.happy = self.check_happiness(env)
 
-    def step(self, new_time, env):
+    def step(self, now, env):
         if not self.check_happiness(env):
             env.move(self)
 
-    def complete(self, current_time, env):
+    def complete(self, now, env):
         self.happy = self.check_happiness(env)
 
     def check_happiness(self, env):
@@ -85,22 +85,19 @@ class SegregationEnvironment(dworp.Environment):
         agent.x = x2
         agent.y = y2
 
-    def init(self, start_time):
-        pass
-
     def step(self, new_time, agents):
         pass
 
 
 class SegObserver(dworp.Observer):
     """Writes simulation state to stdout"""
-    def start(self, time, agents, env):
-        print("Starting: {}% agents happy".format(self.get_happiness(agents)))
+    def start(self, now, agents, env):
+        print("Step {}: {}% agents happy".format(now, self.get_happiness(agents)))
 
-    def step(self, time, agents, env):
-        print("Step {}: {}% agents happy".format(time, self.get_happiness(agents)))
+    def step(self, now, agents, env):
+        print("Step {}: {}% agents happy".format(now, self.get_happiness(agents)))
 
-    def done(self, agents, env):
+    def stop(self, now, agents, env):
         print("Ending: {}% agents happy".format(self.get_happiness(agents)))
 
     @staticmethod
@@ -111,7 +108,7 @@ class SegObserver(dworp.Observer):
 
 class SegTerminator(dworp.Terminator):
     """Stop when everyone is happy"""
-    def test(self, time, agents, env):
+    def test(self, now, agents, env):
         return SegObserver.get_happiness(agents) >= 100
 
 
@@ -129,13 +126,13 @@ class PyGameRenderer(dworp.Observer):
         self.background = self.background.convert()
         self.clock = pygame.time.Clock()
 
-    def start(self, time, agents, env):
+    def start(self, start_time, agents, env):
         self.draw(agents)
 
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         self.draw(agents)
 
-    def done(self, agents, env):
+    def stop(self, now, agents, env):
         pygame.quit()
 
     def draw(self, agents):

@@ -15,10 +15,10 @@ class CollegeStudent(dworp.TwoStageAgent):
         vertex['agent'] = self
         self.vertex = vertex
 
-    def init(self, start_time, env):
+    def init(self, now, env):
         self.state.fill(0)
 
-    def step(self, new_time, env):
+    def step(self, now, env):
         neighbors = self.vertex.neighbors()
         count = sum([v['agent'].wearing_shorts for v in neighbors])
         probability = 0.6 * env.temp / float(env.MAX_TEMP) + 0.4 * count / float(len(neighbors) + 0.00001)
@@ -38,10 +38,10 @@ class WeatherEnvironment(dworp.NetworkEnvironment):
     def __init__(self, graph):
         super().__init__(1, graph)
 
-    def init(self, start_time):
+    def init(self, now):
         self.state.fill(0)
 
-    def step(self, new_time, agents):
+    def step(self, now, agents):
         self.state[self.TEMP] = np.random.randint(self.MIN_TEMP, self.MAX_TEMP)
         self.logger.info("Temperature is now {}".format(self.state[self.TEMP]))
 
@@ -51,11 +51,11 @@ class WeatherEnvironment(dworp.NetworkEnvironment):
 
 
 class ShortsObserver(dworp.Observer):
-    def step(self, time, agents, env):
+    def step(self, now, agents, env):
         count = sum([agent.wearing_shorts for agent in agents])
-        print("{}: Temp {} - Shorts {}".format(time, env.temp, count))
+        print("{}: Temp {} - Shorts {}".format(now, env.temp, count))
 
-    def done(self, agents, env):
+    def stop(self, now, agents, env):
         print("Simulation over")
 
 

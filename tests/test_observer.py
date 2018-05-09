@@ -35,10 +35,10 @@ class ChainedObserverTest(unittest.TestCase):
         obs2 = mock.create_autospec(spec=Observer)
         obs = ChainedObserver(obs1, obs2)
 
-        obs.stop([], None)
+        obs.stop(99, [], None)
 
-        self.assertEqual([mock.call.stop([], None)], obs1.mock_calls)
-        self.assertEqual([mock.call.stop([], None)], obs2.mock_calls)
+        self.assertEqual([mock.call.stop(99, [], None)], obs1.mock_calls)
+        self.assertEqual([mock.call.stop(99, [], None)], obs2.mock_calls)
 
     def test_append(self):
         obs1 = mock.create_autospec(spec=Observer)
@@ -72,12 +72,12 @@ class KeyPauseObserverTest(unittest.TestCase):
 
     def test_stop_flag_default(self):
         obs = KeyPauseObserver()
-        obs.stop([], None)
+        obs.stop(99, [], None)
         self.assertFalse(builtins.input.called)
 
     def test_stop_flag_on(self):
         obs = KeyPauseObserver(stop=True)
-        obs.stop([], None)
+        obs.stop(99, [], None)
         self.assertTrue(builtins.input.called)
 
 
@@ -106,12 +106,12 @@ class PauseObserverTest(unittest.TestCase):
 
     def test_stop_flag_default(self):
         obs = PauseObserver(1)
-        obs.stop([], None)
+        obs.stop(99, [], None)
         self.assertFalse(time.sleep.called)
 
     def test_stop_flag_on(self):
         obs = PauseObserver(1, stop=True)
-        obs.stop([], None)
+        obs.stop(99, [], None)
         self.assertTrue(time.sleep.called)
 
 
@@ -125,5 +125,5 @@ class PauseAtEndObserverTest(unittest.TestCase):
 
     def test(self):
         obs = PauseAtEndObserver(1)
-        obs.stop([], None)
+        obs.stop(99, [], None)
         self.assertTrue(time.sleep.called)
