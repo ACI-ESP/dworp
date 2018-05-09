@@ -1,5 +1,3 @@
-__author__ = 'schmiac1'
-
 """
 Aurora's Attempt to quickly implement Axelrod model of...
 
