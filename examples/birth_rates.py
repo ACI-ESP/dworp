@@ -96,7 +96,7 @@ class MatplotlibObservor(dworp.Observer):
         ymax = max(700, max(self.red) + margin, max(self.blue) + margin)
         axes.set_ylim([ymin, ymax])
 
-        plt.draw_all()
+        plt.draw()
         plt.pause(0.001)
         figures = plt.get_fignums()
         if not figures:
