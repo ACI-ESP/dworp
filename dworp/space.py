@@ -21,25 +21,27 @@ class Grid:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.data = np.empty(shape=(width, height), dtype=object)
+        self.data = []
+        for x in range(width):
+            self.data.append([None] * height)
 
     def occupied(self, x, y):
         """Does anyone live here"""
-        return self.data[x, y] is not None
+        return self.data[x][y] is not None
 
     def add(self, agent, x, y):
         """Add an agent at the specified location
         Does not check if anyone else lives here first!
         """
-        self.data[x, y] = agent
+        self.data[x][y] = agent
 
     def get(self, x, y):
         """Get the current agent that lives here (or None)"""
-        return self.data[x, y]
+        return self.data[x][y]
 
     def remove(self, x, y):
         """Remove the agent from here"""
-        self.data[x, y] = None
+        self.data[x][y] = None
 
     def move(self, x1, y1, x2, y2):
         """Move an agent from location 1 to location 2
@@ -47,7 +49,7 @@ class Grid:
         """
         agent = self.get(x1, y1)
         self.remove(x1, y1)
-        self.data[x2, y2] = agent
+        self.data[x2][y2] = agent
 
     def neighbors(self, x, y):
         """Get the neighbor agents of this location
@@ -61,5 +63,5 @@ class Grid:
             x1 = x + position[0]
             y1 = y + position[1]
             if 0 <= x1 < self.width and 0 <= y1 < self.height and self.occupied(x1, y1):
-                neighbors.append(self.data[x1, y1])
+                neighbors.append(self.data[x1][y1])
         return neighbors

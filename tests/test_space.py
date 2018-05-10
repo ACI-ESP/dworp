@@ -10,7 +10,8 @@ import unittest.mock as mock
 class GridTest(unittest.TestCase):
     def test_creation(self):
         grid = Grid(10, 20)
-        self.assertEqual((10, 20), grid.data.shape)
+        self.assertEqual(None, grid.get(9, 19))
+        self.assertRaises(IndexError, grid.get, 19, 9)
 
     def test_occupied(self):
         grid = Grid(10, 10)
