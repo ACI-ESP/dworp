@@ -125,6 +125,7 @@ class VariablePlotter(Observer):  # pragma: no cover
 
     def update(self, now, agents, env):
         # clear figure, create new plot, and update figure
+        plt.figure(self.fig.number)
         plt.clf()
         self.plot(now, agents, env)
         plt.draw()
