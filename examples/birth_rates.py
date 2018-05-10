@@ -1,5 +1,7 @@
 import argparse
+import collections
 import dworp
+import dworp.plot
 import logging
 import math
 import numpy as np
@@ -23,6 +25,24 @@ class Person(dworp.SelfNamingAgent):
         if self.rng.uniform() < self.additional_birth_probability:
             num_children += 1
         return [Person(self.color, self.fertility, self.rng) for x in range(num_children)]
+
+
+class BirthEnvironment(dworp.Environment):
+    def __init__(self, data):
+        super().__init__(0)
+        self.data = collections.Counter()
+        self.red_count = data['red']
+        self.blue_count = data['blue']
+
+    def step(self, now, agents):
+        pass
+
+    def complete(self, now, agents):
+        self.data.clear()
+        for agent in agents:
+            self.data.update({agent.color: 1})
+        self.red_count = self.data['red']
+        self.blue_count = self.data['blue']
 
 
 class BirthObserver(dworp.Observer):
@@ -63,7 +83,6 @@ class BirthSimulation(dworp.BasicSimulation):
     def __init__(self, params, observer):
         self.params = params
         self.rng = np.random.RandomState(params.seed)
-        env = dworp.NullEnvironment()
         time = dworp.InfiniteTime()
         scheduler = dworp.BasicScheduler()
         terminator = BirthTerminator()
@@ -73,6 +92,8 @@ class BirthSimulation(dworp.BasicSimulation):
         red = [Person('red', params.red_fertility, self.rng) for x in range(num_people)]
         blue = [Person('blue', params.blue_fertility, self.rng) for x in range(num_people)]
         people = red + blue
+
+        env = BirthEnvironment({'red': len(red), 'blue': len(blue)})
 
         super().__init__(people, env, time, scheduler, observer, terminator)
 
@@ -88,6 +109,7 @@ class BirthSimulation(dworp.BasicSimulation):
                 self.agents.extend(new_people)
             # death
             self.reap()
+            self.env.complete(current_time, self.agents)
             self.observer.step(current_time, self.agents, self.env)
             if self.terminator.test(current_time, self.agents, self.env):
                 break
@@ -121,8 +143,16 @@ if __name__ == "__main__":
     assert(1 <= args.capacity <= 4000)
     assert(0 <= args.red <= 10)
     assert(0 <= args.blue <= 10)
-    params = BirthParams(args.capacity, args.red, args. blue, args.seed)
+    params = BirthParams(args.capacity, args.red, args.blue, args.seed)
 
     # create and run one realization of the simulation
-    sim = BirthSimulation(params, BirthObserver())
+    observer = dworp.ChainedObserver(
+        BirthObserver(),
+        dworp.PauseAtEndObserver(3),
+        dworp.plot.VariablePlotter(['red_count', 'blue_count'], ['r', 'b'],
+                                   title="Birth and Death Sim",
+                                   ylim=[300, 700], xlim=[0, 20],
+                                   xlabel='Generations', ylabel='Population')
+    )
+    sim = BirthSimulation(params, observer)
     sim.run()
