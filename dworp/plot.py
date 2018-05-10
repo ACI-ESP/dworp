@@ -30,8 +30,8 @@ class VariablePlotter(Observer):  # pragma: no cover
     """Plot one or more variables from the Environment
 
     Args:
-        var (string): Name of variable in Environment to plot
-        fmt (string): Optional matplotlib format string (default is "b"
+        var (string, list): Name or list of names of variable in Environment to plot
+        fmt (string, list): Optional matplotlib format string or list of strings (default is "b")
         scrolling (int): Optional number of time steps in scroll or 0 for no scrolling
         title(string): Optional figure title (default is name of variable)
         xlabel(string): Optional x-axis label (default is "Time")
@@ -42,12 +42,12 @@ class VariablePlotter(Observer):  # pragma: no cover
     """
     def __init__(self, var, fmt="b", scrolling=0, title=None, xlabel="Time", ylabel=None,
                  xlim=None, ylim=None, pause=0.001):
-        self.var_name = var
-        self.fmt = fmt
+        self.var_names = [var] if isinstance(var, str) else var
+        self.fmt = self._prepare_format_option(fmt)
         self.scrolling = scrolling
-        self.title = title if title else var
+        self.title = title if title else self._prepare_default_title()
         self.xlabel = xlabel
-        self.ylabel = ylabel if ylabel else var
+        self.ylabel = ylabel if ylabel else self._prepare_default_title()
         self.xlim = xlim
         self.ylim = ylim
         self.pause = pause
@@ -55,7 +55,21 @@ class VariablePlotter(Observer):  # pragma: no cover
         self.axes_margin = 0.01
 
         self.time = []
-        self.data = []
+        self.data = {name: [] for name in self.var_names}
+
+    def _prepare_format_option(self, fmt):
+        # fmt must be either same length as var_names or length 1
+        format_ = [fmt] if isinstance(fmt, str) else fmt
+        assert(len(format_) == 1 or len(format_) == len(self.var_names))
+        if len(format_) != len(self.var_names):
+            format_ = format_ * len(self.var_names)
+        return dict(zip(self.var_names, format_))
+
+    def _prepare_default_title(self):
+        if len(self.var_names) == 0:
+            return self.var_names[0]
+        else:
+            return ' & '.join(self.var_names)
 
     def start(self, now, agents, env):
         self.prepare()
@@ -69,15 +83,17 @@ class VariablePlotter(Observer):  # pragma: no cover
 
     def plot(self, now, agents, env):
         self.time.append(now)
-        self.data.append(getattr(env, self.var_name))
+        for name in self.var_names:
+            self.data[name].append(getattr(env, name))
         if self.scrolling:
             plot_time = self.time[(-1 * self.scrolling):]
-            plot_data = self.data[(-1 * self.scrolling):]
+            plot_data = {name: data[(-1 * self.scrolling):] for name, data in self.data.items()}
         else:
             plot_time = self.time
             plot_data = self.data
 
-        plt.plot(plot_time, plot_data, self.fmt)
+        for name, data in plot_data.items():
+            plt.plot(plot_time, data, self.fmt[name])
         axes = self.fig.axes[0]
         axes.set_xlabel(self.xlabel)
         axes.set_ylabel(self.ylabel)
@@ -87,11 +103,10 @@ class VariablePlotter(Observer):  # pragma: no cover
         if self.ylim:
             ylim = axes.get_ylim()
             margin = self.axes_margin * abs(ylim[1] - ylim[0])
-            ymin = min(self.ylim[0], min(self.data) - margin)
-            ymax = max(self.ylim[1], max(self.data) + margin)
+            ymin = min(self.ylim[0], min(min(self.data.values())) - margin)
+            ymax = max(self.ylim[1], max(max(self.data.values())) + margin)
             axes.set_ylim([ymin, ymax])
         if self.xlim:
-            xlim = axes.get_xlim()
             xmin = min(self.xlim[0], min(self.time))
             xmax = max(self.xlim[1], max(self.time))
             axes.set_xlim([xmin, xmax])
