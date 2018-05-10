@@ -26,7 +26,7 @@ class PlotPauseObserver(PauseObserver):
         plt.pause(self.delay)
 
 
-class VariablePlotter(Observer):
+class VariablePlotter(Observer): # pragma: no cover
     """Plot one or more variables from the Environment"""
     def __init__(self, var, title=None, xlabel="Time", ylabel=None, pause=0.001):
         self.var_name = var
