@@ -1,7 +1,9 @@
 import argparse
+import collections
 import dworp
 import logging
 import math
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -25,6 +27,21 @@ class Person(dworp.SelfNamingAgent):
         return [Person(self.color, self.fertility, self.rng) for x in range(num_children)]
 
 
+class BirthEnvironment(dworp.Environment):
+    def __init__(self, colors):
+        super().__init__(0)
+        self.colors = colors
+        self.data = collections.Counter()
+
+    def step(self, now, agents):
+        pass
+
+    def complete(self, now, agents):
+        self.data.clear()
+        for agent in agents:
+            self.data.update({agent.color: 1})
+
+
 class BirthObserver(dworp.Observer):
     """Writes simulation state to stdout"""
     def start(self, time, agents, env):
@@ -41,6 +58,49 @@ class BirthObserver(dworp.Observer):
         num_red = sum([agent.color == "red" for agent in agents])
         num_blue = sum([agent.color == "blue" for agent in agents])
         return num_red, num_blue
+
+
+class MatplotlibObservor(dworp.Observer):
+    def __init__(self):
+        self.time = []
+        self.blue = []
+        self.red = []
+
+    def start(self, now, agents, env):
+        plt.ion()
+        plt.figure()
+        plt.gcf().canvas.set_window_title("Populations")
+
+    def step(self, now, agents, env):
+        self.plot(now, agents, env)
+
+    def plot(self, now, agents, env):
+        plt.clf()
+
+        self.time.append(now)
+        self.blue.append(env.data['blue'])
+        self.red.append(env.data['red'])
+
+        plt.plot(self.time[-20:], self.blue[-20:], 'b')
+        plt.plot(self.time[-20:], self.red[-20:], 'r')
+
+        plt.xlabel("Generations")
+        plt.ylabel("Population")
+
+        axes = plt.gca()
+        ylim = axes.get_ylim()
+        margin = 0.01 * abs(ylim[1] - ylim[0])
+        if len(self.time) < 20:
+            axes.set_xlim([0, 20])
+        ymin = min(300, min(self.red) - margin, min(self.blue) - margin)
+        ymax = max(700, max(self.red) + margin, max(self.blue) + margin)
+        axes.set_ylim([ymin, ymax])
+
+        plt.draw_all()
+        plt.pause(0.001)
+        figures = plt.get_fignums()
+        if not figures:
+            quit()
 
 
 class BirthTerminator(dworp.Terminator):
@@ -63,7 +123,7 @@ class BirthSimulation(dworp.BasicSimulation):
     def __init__(self, params, observer):
         self.params = params
         self.rng = np.random.RandomState(params.seed)
-        env = dworp.NullEnvironment()
+        env = BirthEnvironment(['red', 'blue'])
         time = dworp.InfiniteTime()
         scheduler = dworp.BasicScheduler()
         terminator = BirthTerminator()
@@ -88,6 +148,7 @@ class BirthSimulation(dworp.BasicSimulation):
                 self.agents.extend(new_people)
             # death
             self.reap()
+            self.env.complete(current_time, self.agents)
             self.observer.step(current_time, self.agents, self.env)
             if self.terminator.test(current_time, self.agents, self.env):
                 break
@@ -121,8 +182,12 @@ if __name__ == "__main__":
     assert(1 <= args.capacity <= 4000)
     assert(0 <= args.red <= 10)
     assert(0 <= args.blue <= 10)
-    params = BirthParams(args.capacity, args.red, args. blue, args.seed)
+    params = BirthParams(args.capacity, args.red, args.blue, args.seed)
 
     # create and run one realization of the simulation
-    sim = BirthSimulation(params, BirthObserver())
+    observer = dworp.ChainedObserver(
+        BirthObserver(),
+        MatplotlibObservor()
+    )
+    sim = BirthSimulation(params, observer)
     sim.run()
