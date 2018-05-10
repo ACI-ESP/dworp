@@ -72,7 +72,7 @@ class InteractiveVariablePlotterTest(unittest.TestCase):
         self.confirm()
 
     def test_2_axes_limits(self):
-        plotter = VariablePlotter('data', title="Limit test and format test", xlim=[0, 20], ylim=[0, 5], fmt="r--")
+        plotter = VariablePlotter('data', title="Limit test and format test", xlim=[0, 20], ylim=[0, 10], fmt="r--")
         env = mock.Mock()
         agents = []
 
@@ -102,7 +102,8 @@ class InteractiveVariablePlotterTest(unittest.TestCase):
         self.confirm()
 
     def test_4_two_variables(self):
-        plotter = VariablePlotter(var=['data1', 'data2'], fmt=['b', 'r'], title="Two variable test")
+        plotter = VariablePlotter(var=['data1', 'data2'], fmt=['b', 'r'],
+                                  title="Two variable test", legend="upper right")
         env = mock.Mock()
         agents = []
 

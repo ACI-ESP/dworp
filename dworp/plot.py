@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 from .observer import Observer, PauseObserver
 
 # Note: do not include this in __init__.py so that dworp does not have a hard requirement
@@ -38,10 +39,11 @@ class VariablePlotter(Observer):  # pragma: no cover
         ylabel(string): Optional y-axis label (default is name of variable)
         xlim(list): Optional starting x-axis limits as [xmin, xmax]
         ylim(list): Optional starting y-axis limits as [ymin, ymax]
+        legend(bool, string): A string location for legend or False (default is False)
         pause(float): Optional pause between updates (must be > 0)
     """
     def __init__(self, var, fmt="b", scrolling=0, title=None, xlabel="Time", ylabel=None,
-                 xlim=None, ylim=None, pause=0.001):
+                 xlim=None, ylim=None, legend=False, pause=0.001):
         self.var_names = [var] if isinstance(var, str) else var
         self.fmt = self._prepare_format_option(fmt)
         self.scrolling = scrolling
@@ -50,6 +52,7 @@ class VariablePlotter(Observer):  # pragma: no cover
         self.ylabel = ylabel if ylabel else self._prepare_default_title()
         self.xlim = xlim
         self.ylim = ylim
+        self.legend = legend
         self.pause = pause
         self.fig = None
         self.axes_margin = 0.01
@@ -93,7 +96,9 @@ class VariablePlotter(Observer):  # pragma: no cover
             plot_data = self.data
 
         for name, data in plot_data.items():
-            plt.plot(plot_time, data, self.fmt[name])
+            plt.plot(plot_time, data, self.fmt[name], label=name)
+        if self.legend:
+            plt.legend(loc=self.legend)
         axes = self.fig.axes[0]
         axes.set_xlabel(self.xlabel)
         axes.set_ylabel(self.ylabel)
@@ -110,6 +115,7 @@ class VariablePlotter(Observer):  # pragma: no cover
             xmin = min(self.xlim[0], min(self.time))
             xmax = max(self.xlim[1], max(self.time))
             axes.set_xlim([xmin, xmax])
+        axes.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
 
     def prepare(self):
         # turn interactive mode on and create an empty figure
