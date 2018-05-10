@@ -26,15 +26,33 @@ class PlotPauseObserver(PauseObserver):
         plt.pause(self.delay)
 
 
-class VariablePlotter(Observer): # pragma: no cover
-    """Plot one or more variables from the Environment"""
-    def __init__(self, var, title=None, xlabel="Time", ylabel=None, pause=0.001):
+class VariablePlotter(Observer):  # pragma: no cover
+    """Plot one or more variables from the Environment
+
+    Args:
+        var (string): Name of variable in Environment to plot
+        fmt (string): Optional matplotlib format string (default is "b"
+        scrolling (int): Optional number of time steps in scroll or 0 for no scrolling
+        title(string): Optional figure title (default is name of variable)
+        xlabel(string): Optional x-axis label (default is "Time")
+        ylabel(string): Optional y-axis label (default is name of variable)
+        xlim(list): Optional starting x-axis limits as [xmin, xmax]
+        ylim(list): Optional starting y-axis limits as [ymin, ymax]
+        pause(float): Optional pause between updates (must be > 0)
+    """
+    def __init__(self, var, fmt="b", scrolling=0, title=None, xlabel="Time", ylabel=None,
+                 xlim=None, ylim=None, pause=0.001):
         self.var_name = var
+        self.fmt = fmt
+        self.scrolling = scrolling
         self.title = title if title else var
         self.xlabel = xlabel
         self.ylabel = ylabel if ylabel else var
+        self.xlim = xlim
+        self.ylim = ylim
         self.pause = pause
         self.fig = None
+        self.axes_margin = 0.01
 
         self.time = []
         self.data = []
@@ -52,11 +70,31 @@ class VariablePlotter(Observer): # pragma: no cover
     def plot(self, now, agents, env):
         self.time.append(now)
         self.data.append(getattr(env, self.var_name))
+        if self.scrolling:
+            plot_time = self.time[(-1 * self.scrolling):]
+            plot_data = self.data[(-1 * self.scrolling):]
+        else:
+            plot_time = self.time
+            plot_data = self.data
 
-        plt.plot(self.time, self.data, 'b')
-        axis = self.fig.axes[0]
-        axis.set_xlabel(self.xlabel)
-        axis.set_ylabel(self.ylabel)
+        plt.plot(plot_time, plot_data, self.fmt)
+        axes = self.fig.axes[0]
+        axes.set_xlabel(self.xlabel)
+        axes.set_ylabel(self.ylabel)
+        self.set_axes_limits(axes)
+
+    def set_axes_limits(self, axes):
+        if self.ylim:
+            ylim = axes.get_ylim()
+            margin = self.axes_margin * abs(ylim[1] - ylim[0])
+            ymin = min(self.ylim[0], min(self.data) - margin)
+            ymax = max(self.ylim[1], max(self.data) + margin)
+            axes.set_ylim([ymin, ymax])
+        if self.xlim:
+            xlim = axes.get_xlim()
+            xmin = min(self.xlim[0], min(self.time))
+            xmax = max(self.xlim[1], max(self.time))
+            axes.set_xlim([xmin, xmax])
 
     def prepare(self):
         # turn interactive mode on and create an empty figure

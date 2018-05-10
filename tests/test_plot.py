@@ -54,3 +54,33 @@ class VariablePlotterTest(unittest.TestCase):
         plotter.stop(x, agents, env)
 
         self.confirm()
+
+    def test_axes_limits(self):
+        plotter = VariablePlotter('data', title="Limit test and format test", xlim=[0, 20], ylim=[0, 5], fmt="r--")
+        env = mock.Mock()
+        agents = []
+
+        env.data = 0
+        plotter.start(0, agents, env)
+        for x in range(1, 50):
+            env.data = 10 * random.random()
+            plotter.step(x, agents, env)
+        time.sleep(1)
+        plotter.stop(x, agents, env)
+
+        self.confirm()
+
+    def test_scrolling(self):
+        plotter = VariablePlotter('data', title="Scrolling test", scrolling=20, fmt='g')
+        env = mock.Mock()
+        agents = []
+
+        env.data = 0
+        plotter.start(0, agents, env)
+        for x in range(1, 50):
+            env.data = 10 * random.random()
+            plotter.step(x, agents, env)
+        time.sleep(1)
+        plotter.stop(x, agents, env)
+
+        self.confirm()
