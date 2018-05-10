@@ -4,6 +4,7 @@
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker
+import os
 from .observer import Observer, PauseObserver
 
 # Note: do not include this in __init__.py so that dworp does not have a hard requirement
@@ -41,9 +42,10 @@ class VariablePlotter(Observer):  # pragma: no cover
         ylim(list): Optional starting y-axis limits as [ymin, ymax]
         legend(bool, string): A string location for legend or False (default is False)
         pause(float): Optional pause between updates (must be > 0)
+        output_dir(string): Optional directory to write the frames to as PNGs
     """
     def __init__(self, var, fmt="b", scrolling=0, title=None, xlabel="Time", ylabel=None,
-                 xlim=None, ylim=None, legend=False, pause=0.001):
+                 xlim=None, ylim=None, legend=False, pause=0.001, output_dir=None):
         self.var_names = [var] if isinstance(var, str) else var
         self.fmt = self._prepare_format_option(fmt)
         self.scrolling = scrolling
@@ -54,6 +56,7 @@ class VariablePlotter(Observer):  # pragma: no cover
         self.ylim = ylim
         self.legend = legend
         self.pause = pause
+        self.output_dir = output_dir
         self.fig = None
         self.axes_margin = 0.01
 
@@ -135,3 +138,11 @@ class VariablePlotter(Observer):  # pragma: no cover
         figures = plt.get_fignums()
         if not figures:
             quit()
+        if self.output_dir:
+            self.save(now)
+
+    def save(self, now):
+        # with ImageMagick, create an animated GIF with:
+        # convert -delay 10 -loop 0 *.png my_animation.gif
+        path = os.path.join(self.output_dir, "{0:05d}.png".format(now))
+        self.fig.savefig(path)
