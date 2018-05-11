@@ -198,24 +198,33 @@ class AxelrodTerminator(dworp.Terminator):
             return terminate
 
 
-if False:
-    logging.basicConfig(level=logging.WARN)
-    # ensuring reproducibility by setting the seed
-    np.random.seed(34756)
-    xdim = 10
-    ydim = 10
-    n_tsteps = 8000 # because we cycle through the 100 sites each time, this represents 80K events
-    g = igraph.Graph.Lattice([xdim,ydim], nei=1, directed=False, circular=False)
-    agents = [Site(v) for v in g.vs]
-    env = AxelrodEnvironment(g)
-    time = dworp.BasicTime(n_tsteps)
-    # ensuring reproducibility by setting the seed
-    scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-    observer = AxelrodObserver(1000)
-    term = AxelrodTerminator(1000)
-    sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer,terminator=term)
+class RegressionTest:
+    def test(self):
+        lastcountshouldbe = 4
 
-    sim.run()
+        logging.basicConfig(level=logging.WARN)
+        # ensuring reproducibility by setting the seed
+        np.random.seed(34756)
+        xdim = 10
+        ydim = 10
+        n_tsteps = 8000 # because we cycle through the 100 sites each time, this represents 80K events
+        g = igraph.Graph.Lattice([xdim,ydim], nei=1, directed=False, circular=False)
+        agents = [Site(v) for v in g.vs]
+        env = AxelrodEnvironment(g)
+        time = dworp.BasicTime(n_tsteps)
+        # ensuring reproducibility by setting the seed
+        scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
+        observer = AxelrodObserver(1000)
+        term = AxelrodTerminator(1000)
+        sim = dworp.TwoStageSimulation(agents, env, time, scheduler, observer,terminator=term)
 
-    lastcount = observer.computenumregions(0,agents,env)
-    print("Last Count = %d" % (lastcount))
+        sim.run()
+
+        lastcount = observer.computenumregions(0,agents,env)
+        print("Last Count = %d" % (lastcount))
+        if lastcount == lastcountshouldbe:
+            print("Regression test passed!")
+            return True
+        else:
+            print("Regression test failed! last count should be %d" % (lastcountshouldbe))
+            return False
