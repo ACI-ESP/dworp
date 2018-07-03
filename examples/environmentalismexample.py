@@ -12,10 +12,11 @@ import pdb
 
 class Person(dworp.Agent):
 
-    def __init__(self, vertex, numfeatures=16):
+    def __init__(self, vertex, numfeatures,traits):
         super().__init__(vertex.index, numfeatures)
         vertex['agent'] = self
         self.vertex = vertex
+        self.state = traits
 
     def step(self, now, env):
         neighbors = self.vertex.neighbors()
@@ -54,7 +55,7 @@ class EEObserver(dworp.Observer):
         self.printby = printby
 
     def step(self, now, agents, env):
-        print("%d: current number of straw users is %d" % (now,self.computenumreusablestrawusers(self, now, agents, env)))
+        print("%d: current number of straw users is %d" % (now,self.computenumreusablestrawusers(now, agents, env)))
         pass
 
     def computenumreusablestrawusers(self, now, agents, env):
@@ -91,9 +92,9 @@ class RegressionTest:
         logging.basicConfig(level=logging.WARN)
         # ensuring reproducibility by setting the seed
         np.random.seed(5769)
-        n_tsteps = 8000 # because we cycle through the 100 Persons each time, this represents 80K events
+        n_tsteps = 800 # because we cycle through the 100 Persons each time, this represents 80K events
         n_agents = 1000
-        g = igraph.Graph()
+        n_friends = 20
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
         cov = np.zeros((5,5))
@@ -103,10 +104,50 @@ class RegressionTest:
         cov[3,:] = [0.093000 ,0.061132,0.042284,0.384400,0.098766]
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
         personalities = np.random.multivariate_normal(mu,cov,n_agents)
+        wealth = np.random.normal(300000,100000,n_agents)
+        wealth[wealth > 600000] = 600000
+        wealth[wealth < 10000]  = 10000
+        offsets_lat = np.random.random((n_agents,1))
+        offsets_lon = np.random.random((n_agents,1))
+        lat = offsets_lat + 78.6569 # deg west
+        lon = offsets_lon + 37.4316 # deg north
+        gender = np.random.randint(0,1,(n_agents,1))
+        education = np.random.randint(0,4,(n_agents,1))
+        colddrinks = np.random.normal(0.80,0.15,n_agents)
+        colddrinks[colddrinks > 1] = 1
+        colddrinks[colddrinks < 0] = 0
 
-        
+        eatingout = np.random.normal(0.70,0.10,n_agents)
+        eatingout[eatingout > 1] = 1
+        eatingout[eatingout < 0] = 0
+        envaware = np.random.random((n_agents,1))
 
-        agents = [Person(v) for v in g.vs]
+        g = igraph.Graph()
+        for i in range(0,n_agents):
+            g.add_vertex(i)
+        vs = g.vs
+        agents = []
+        for i in range(0,n_agents):
+            traits = np.zeros((14))
+            traits[0] = 0 # initially noone uses the reusable straw
+            traits[1] = eatingout[i]
+            traits[2] = envaware[i]
+            traits[3:8] = personalities[i,:]
+            traits[8] = wealth[i]
+            traits[9] = lat[i]
+            traits[10] = lon[i]
+            traits[11] = gender[i]
+            traits[12] = education[i]
+            traits[13] = colddrinks[i]
+            difflat = lat - lat[i]
+            difflon = lon - lon[i]
+            distsq = np.power(difflat,2) + np.power(difflon,2)
+            sorted = np.argsort(distsq)
+            friends = sorted[1:n_friends+1]
+            for j in range(0,len(friends)):
+                g.add_edge(i,int(friends[j]))
+            curagent = Person(vs[i],14,traits)
+
         env = EEEnvironment(g)
         time = dworp.BasicTime(n_tsteps)
         # ensuring reproducibility by setting the seed
@@ -125,3 +166,6 @@ class RegressionTest:
         else:
             print("Regression test failed! last count should be %d" % (lastcountshouldbe))
             return False
+
+thistest = RegressionTest()
+thistest.test()
