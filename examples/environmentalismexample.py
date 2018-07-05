@@ -8,6 +8,8 @@ import igraph
 import logging
 import numpy as np
 import sys
+import os
+import subprocess
 # try:
 #     import pygame
 # except ImportError:
@@ -215,11 +217,11 @@ class EETerminator(dworp.Terminator):
 
 
 class PyGameRenderer(dworp.Observer):
-    def __init__(self, zoom, fps):
+    def __init__(self, zoom, fps, frames_in_anim):
         self.zoom = zoom
         self.fps = fps
-        self.width = 100
-        self.height = 100
+        self.width = 500
+        self.height = 500
 
         pygame.init()
         pygame.display.set_caption("Reusable Straw Simulation")
@@ -227,6 +229,9 @@ class PyGameRenderer(dworp.Observer):
         self.background = pygame.Surface((self.screen.get_size()))
         self.background = self.background.convert()
         self.clock = pygame.time.Clock()
+        self.filename_list = [os.path.join('temp' + str(n) + '.png')
+                         for n in range(frames_in_anim)]
+        self.frame = 0
 
     def start(self, start_time, agents, env):
         self.draw(agents)
@@ -239,11 +244,11 @@ class PyGameRenderer(dworp.Observer):
 
     def draw(self, agents):
         #side = self.zoom - 1
-        side = .05
+        side = 5
         self.background.fill((255, 255, 255))
         for agent in agents:
-            x = self.zoom * agent.x
-            y = self.zoom * agent.y
+            x = self.zoom * agent.x * (0.95*self.width)
+            y = self.zoom * agent.y * (0.95*self.height)
             if agent.state[agent.rs_i] == 1:
                 color = (0, 191, 255)
             else:
@@ -253,8 +258,15 @@ class PyGameRenderer(dworp.Observer):
                     color = (139, 0, 0)
             pygame.draw.rect(self.background, color, (x, y, side, side), 0)
         self.screen.blit(self.background, (0, 0))
+        pygame.font.init()  # you have to call this at the start,
+        # if you want to use this module.
+        myfont = pygame.font.SysFont('Arial', 24)
+        textsurface = myfont.render("Simulation at %d" % (self.frame), False, (0, 0, 0))
+        self.screen.blit(textsurface, (5, int(0.95*self.width)))
         pygame.display.flip()
         self.clock.tick(self.fps)
+        pygame.image.save(self.screen, self.filename_list[self.frame])
+        self.frame = self.frame + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
@@ -270,7 +282,10 @@ class RegressionTest:
         n_tsteps = 1000
         n_tsteps = 50
         n_agents = 1000
-        n_friends = 20 # each agent has this many friends (based on the n_friends people who are geographically closest)
+        # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
+        n_friends = 2  # Scenario A
+        #n_friends = 5  # Scenario B
+        #n_friends = 20  # Scenario C
         n_fps = 4
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
@@ -352,11 +367,30 @@ class RegressionTest:
         )
         if vis_flag:
             observer.append(dworp.PauseAtEndObserver(3))
-            observer.append(PyGameRenderer(10, n_fps))
+            pgr = PyGameRenderer(1, n_fps, n_tsteps+1)
+            observer.append(pgr)
 
         term = EETerminator(10)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
         sim.run()
+
+        if vis_flag:
+            filename_list = pgr.filename_list
+            seconds_per_frame = 1.0/n_fps
+            frame_delay = str(int(seconds_per_frame * 100))
+            command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim.gif']
+            try:
+                # Use the "convert" command (part of ImageMagick) to build the animation
+                subprocess.call(command_list)
+            except:
+                print("couldnt create the animation")
+                pass
+            # Earlier, we saved an image file for each frame of the animation. Now
+            # that the animation is assembled, we can (optionally) delete those files
+            if True:
+                for filename in filename_list:
+                    os.remove(filename)
+            return
 
         lastcount = myobserver.computenumreusablestrawusers(0,agents,env)
         print("Last Count = %d" % (lastcount))
