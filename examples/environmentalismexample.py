@@ -7,12 +7,14 @@ import dworp
 import igraph
 import logging
 import numpy as np
-import pdb
-try:
-    import pygame
-except ImportError:
-    # vis will be turned off
-    pass
+import sys
+# try:
+#     import pygame
+# except ImportError:
+#     # vis will be turned off
+#     print("error importing pygame: vis will be turned off")
+#     pass
+import pygame
 
 
 class Person(dworp.Agent):
@@ -45,6 +47,12 @@ class Person(dworp.Agent):
         self.eof = min( 0.1 * (float(self.state[self.w_i])/600000 + 4*self.sa + self.state[self.o_i]),1)
         self.eac = 0.25 * (float(self.state[self.a_i]) + self.state[self.c_i] + 2.0*self.rf)
 
+        #lat = offsets_lon + 37.4316 # deg north
+        #lon = offsets_lat + 78.6569 # deg west
+        # convenience constants
+        self.x = self.state[self.lon_i] - 78.6569
+        self.y = self.state[self.lat_i] - 37.4316
+
     def step(self, now, env):
         # In this function we update EO, EA, and then RS
 
@@ -57,6 +65,7 @@ class Person(dworp.Agent):
         sum_for_EO = 0.0
         sum_for_EA = 0.0
         sum_for_denom = 0.0
+        sum_for_RS = 0.0
         for i in range(0,len(neighbors)):
             nvert = neighbors[i]
             sa_array[i] = nvert["agent"].sa
@@ -65,6 +74,9 @@ class Person(dworp.Agent):
             sum_for_EO = sum_for_EO + (sa_array[i] * eo_array[i])
             sum_for_EA = sum_for_EA + (sa_array[i] * ea_array[i])
             sum_for_denom = sum_for_denom + (sa_array[i])
+            if nvert["agent"].state[self.rs_i] > 0:
+                sum_for_RS = sum_for_RS + sa_array[i]
+        frac_for_RS = sum_for_RS/sum_for_denom
 
         # update EO
         myEO = 1.0/(1.0 + (1.0 + self.rf)*sum_for_denom) * ( self.state[self.eo_i] + (1.0 + self.rf)*sum_for_EO )
@@ -97,10 +109,10 @@ class Person(dworp.Agent):
                         self.state[self.rs_i] = 1
             else: # we have never used it in the past
                 if self.state[self.w_i] >= 150000:
-                    threshval = (0.65 + (1-self.state[self.o_i]))/2
-                    curval = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0
+                    threshval = (0.65 * (1-self.state[self.o_i]))/2
+                    curval = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0 + 0.25*frac_for_RS
                     if curval >= threshval:
-                        curprob = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0
+                        curprob = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0 + 0.25*frac_for_RS
                         thistrial = np.random.random()
                         if thistrial < curprob:
                             self.state[self.rs_i] = 1
@@ -203,11 +215,11 @@ class EETerminator(dworp.Terminator):
 
 
 class PyGameRenderer(dworp.Observer):
-    def __init__(self, size, zoom, fps):
+    def __init__(self, zoom, fps):
         self.zoom = zoom
         self.fps = fps
-        self.width = size[0]
-        self.height = size[1]
+        self.width = 100
+        self.height = 100
 
         pygame.init()
         pygame.display.set_caption("Reusable Straw Simulation")
@@ -226,12 +238,19 @@ class PyGameRenderer(dworp.Observer):
         pygame.quit()
 
     def draw(self, agents):
-        side = self.zoom - 1
+        #side = self.zoom - 1
+        side = .05
         self.background.fill((255, 255, 255))
         for agent in agents:
             x = self.zoom * agent.x
             y = self.zoom * agent.y
-            color = (255, 128, 0) if agent.color == "orange" else (0, 0, 255)
+            if agent.state[agent.rs_i] == 1:
+                color = (0, 191, 255)
+            else:
+                if agent.state[agent.past_i] == 1:
+                    color = (255, 128, 0)
+                else:
+                    color = (139, 0, 0)
             pygame.draw.rect(self.background, color, (x, y, side, side), 0)
         self.screen.blit(self.background, (0, 0))
         pygame.display.flip()
@@ -248,9 +267,11 @@ class RegressionTest:
         logging.basicConfig(level=logging.WARN)
         # ensuring reproducibility by setting the seed
         np.random.seed(5769)
-        n_tsteps = 8000
+        n_tsteps = 1000
+        n_tsteps = 50
         n_agents = 1000
         n_friends = 20 # each agent has this many friends (based on the n_friends people who are geographically closest)
+        n_fps = 4
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
         cov = np.zeros((5,5))
@@ -260,20 +281,24 @@ class RegressionTest:
         cov[3,:] = [0.093000 ,0.061132,0.042284,0.384400,0.098766]
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
         personalities = np.random.multivariate_normal(mu,cov,n_agents)
+        personalities[personalities > 1] = 1.0
+        personalities[personalities < 0] = 0.0
         wealth = np.random.normal(300000,100000,n_agents)
         wealth[wealth > 600000] = 600000
         wealth[wealth < 10000]  = 10000
         offsets_lat = np.random.random((n_agents,1))
         offsets_lon = np.random.random((n_agents,1))
-        lat = offsets_lat + 78.6569 # deg west
-        lon = offsets_lon + 37.4316 # deg north
+        lat = offsets_lon + 37.4316 # deg north
+        lon = offsets_lat + 78.6569 # deg west
         gender = np.random.randint(0,1,(n_agents,1))
         education = np.random.randint(0,4,(n_agents,1))
-        colddrinks = np.random.normal(0.80,0.15,n_agents)
+        #colddrinks = np.random.normal(0.80,0.15,n_agents)
+        colddrinks = np.random.normal(0.90, 0.1, n_agents)
         colddrinks[colddrinks > 1] = 1
         colddrinks[colddrinks < 0] = 0
 
-        eatingout = np.random.normal(0.70,0.10,n_agents)
+        #eatingout = np.random.normal(0.70,0.10,n_agents)
+        eatingout = np.random.normal(0.90,0.10,n_agents)
         eatingout[eatingout > 1] = 1
         eatingout[eatingout < 0] = 0
         envaware = np.random.random((n_agents,1))
@@ -309,13 +334,31 @@ class RegressionTest:
         time = dworp.BasicTime(n_tsteps)
         # ensuring reproducibility by setting the seed
         scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-        observer = EEObserver(10)
+        myobserver = EEObserver(10)
+
+        #vis_flag = args.vis and 'pygame' in sys.modules
+        vis_flag = True and 'pygame' in sys.modules
+        if vis_flag:
+            print("vis_flag is True")
+        else:
+            print("vis_flag is False")
+        # vis does not support different colors
+        #colors = ["blue", "orange"]
+        #params = SegregationParams(density, similarity, grid_size, seed, colors)
+
+        # create and run one realization of the simulation
+        observer = dworp.ChainedObserver(
+            myobserver,
+        )
+        if vis_flag:
+            observer.append(dworp.PauseAtEndObserver(3))
+            observer.append(PyGameRenderer(10, n_fps))
+
         term = EETerminator(10)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
-
         sim.run()
 
-        lastcount = observer.computenumreusablestrawusers(0,agents,env)
+        lastcount = myobserver.computenumreusablestrawusers(0,agents,env)
         print("Last Count = %d" % (lastcount))
         if lastcount == lastcountshouldbe:
             print("Regression test passed!")
