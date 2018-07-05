@@ -144,13 +144,15 @@ class EEEnvironment(dworp.NetworkEnvironment):
 
 
 class EEObserver(dworp.Observer):
-    def __init__(self, printby):
-        self.printby = printby
+    def __init__(self, fhandle):
+        self.fhandle = fhandle
 
     def step(self, now, agents, env):
+        curnum = self.computenumreusablestrawusers(now, agents, env)
+        discnum =self.discontinuedreusableusers(now,agents,env)
         print("%d: current number of straw users is %d, number of adopters that no longer use is %d" %
-              (now,self.computenumreusablestrawusers(now, agents, env),
-               self.discontinuedreusableusers(now,agents,env)))
+              (now, curnum, discnum))
+        self.fhandle.write("%d\t%d\t%d\n" % (now, curnum, discnum))
         pass
 
     def computenumreusablestrawusers(self, now, agents, env):
@@ -277,15 +279,9 @@ class RegressionTest:
         lastcountshouldbe = 4
 
         logging.basicConfig(level=logging.WARN)
-        # ensuring reproducibility by setting the seed
-        np.random.seed(5769)
         n_tsteps = 1000
-        n_tsteps = 50
+        n_tsteps = 100
         n_agents = 1000
-        # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
-        n_friends = 2  # Scenario A
-        #n_friends = 5  # Scenario B
-        #n_friends = 20  # Scenario C
         n_fps = 4
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
@@ -295,6 +291,31 @@ class RegressionTest:
         cov[2,:] = [0.059520 ,0.061132,0.384400,0.042284,-0.021948]
         cov[3,:] = [0.093000 ,0.061132,0.042284,0.384400,0.098766]
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
+
+        scenariostr = "C"
+
+        # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
+        if scenariostr == "A":
+            n_friends = 2  # Scenario A
+            outstring = "_A"
+            # ensuring reproducibility by setting the seed
+            np.random.seed(45)
+            mu[0] = 0.25
+        elif scenariostr == "B":
+            n_friends = 5  # Scenario B
+            # ensuring reproducibility by setting the seed
+            np.random.seed(347)
+            outstring = "_B"
+            mu[0] = 0.50
+        else:
+            n_friends = 20  # Scenario C
+            outstring = "_C"
+            # ensuring reproducibility by setting the seed
+            np.random.seed(5769)
+            mu[0] = 0.75
+
+        n_friends = 5  # constant
+
         personalities = np.random.multivariate_normal(mu,cov,n_agents)
         personalities[personalities > 1] = 1.0
         personalities[personalities < 0] = 0.0
@@ -349,10 +370,12 @@ class RegressionTest:
         time = dworp.BasicTime(n_tsteps)
         # ensuring reproducibility by setting the seed
         scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-        myobserver = EEObserver(10)
+        outname = "outputs%s.tsv" % (outstring)
+        fhandle = open(outname,'w')
+        myobserver = EEObserver(fhandle)
 
         #vis_flag = args.vis and 'pygame' in sys.modules
-        vis_flag = True and 'pygame' in sys.modules
+        vis_flag = False and 'pygame' in sys.modules
         if vis_flag:
             print("vis_flag is True")
         else:
@@ -370,15 +393,17 @@ class RegressionTest:
             pgr = PyGameRenderer(1, n_fps, n_tsteps+1)
             observer.append(pgr)
 
-        term = EETerminator(10)
+        term = EETerminator(100)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
         sim.run()
+        fhandle.close()
 
         if vis_flag:
             filename_list = pgr.filename_list
             seconds_per_frame = 1.0/n_fps
             frame_delay = str(int(seconds_per_frame * 100))
-            command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim.gif']
+            #command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim.gif']
+            command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim%s.gif' % (outstring)]
             try:
                 # Use the "convert" command (part of ImageMagick) to build the animation
                 subprocess.call(command_list)
