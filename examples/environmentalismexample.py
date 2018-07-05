@@ -13,22 +13,96 @@ import pdb
 class Person(dworp.Agent):
 
     def __init__(self, vertex, numfeatures,traits):
-        super().__init__(vertex.index, numfeatures)
+        super().__init__(vertex.index, numfeatures+1) # the last state remembers if we adopted RS in the past
         vertex['agent'] = self
         self.vertex = vertex
-        self.state = traits
+        self.state[0:-1] = traits
+        self.rs_i = 0 # changes
+        self.eo_i = 1 # changes
+        self.ea_i = 2 # changes
+        self.o_i = 3
+        self.c_i = 4
+        self.e_i = 5
+        self.a_i = 6
+        self.n_i = 7
+        self.w_i = 8
+        self.lat_i = 9
+        self.lon_i = 10
+        self.g_i = 11
+        self.ed_i = 12
+        self.cd_i = 13
+        self.past_i = 14
+        self.state[self.past_i] = 0 # we start of not having adopted in the past
+
+        # These ceiling and floor parameters are constant, so we'll compute them once here
+        self.sa = self.state[self.e_i]**4
+        self.rf = self.state[self.a_i]**2
+        self.eof = min( 0.1 * (float(self.state[self.w_i])/600000 + 4*self.sa + self.state[self.o_i]),1)
+        self.eac = 0.25 * (float(self.state[self.a_i]) + self.state[self.c_i] + 2.0*self.rf)
 
     def step(self, now, env):
+        # In this function we update EO, EA, and then RS
+
+        # we will need to look up the social activity levels (SA) of our neighbors as well as their
+        # eating out tendency (EO) and environmental awarenesses (EA)
         neighbors = self.vertex.neighbors()
-        logstring = ""
-        if len(neighbors) > 0:
-            selectedind = np.random.randint(0,len(neighbors))
-            randfeatureind = np.random.randint(0,len(self.state))
-            nvert = neighbors[selectedind]
-            neighborstate = nvert["agent"].state
-        else:
-            logstring = "%sAgent %d has no neighbors!" % (logstring,self.agent_id)
-        self.logger.info("%s" % (logstring))
+        sa_array = np.zeros((len(neighbors)))
+        eo_array = np.zeros((len(neighbors)))
+        ea_array = np.zeros((len(neighbors)))
+        sum_for_EO = 0.0
+        sum_for_EA = 0.0
+        sum_for_denom = 0.0
+        for i in range(0,len(neighbors)):
+            nvert = neighbors[i]
+            sa_array[i] = nvert["agent"].sa
+            eo_array[i] = nvert["agent"].state[self.eo_i]
+            ea_array[i] = nvert["agent"].state[self.ea_i]
+            sum_for_EO = sum_for_EO + (sa_array[i] * eo_array[i])
+            sum_for_EA = sum_for_EA + (sa_array[i] * ea_array[i])
+            sum_for_denom = sum_for_denom + (sa_array[i])
+
+        # update EO
+        myEO = 1.0/(1.0 + (1.0 + self.rf)*sum_for_denom) * ( self.state[self.eo_i] + (1.0 + self.rf)*sum_for_EO )
+        myEO = min(myEO,self.eof)
+        self.state[self.eo_i] = myEO
+
+        # update EA
+        myEA = 1.0 / (1.0 + (1.0 + self.rf) * sum_for_denom) * (self.state[self.ea_i] + (1.0 + self.rf) * sum_for_EA)
+        myEA = max(myEA, self.eac)
+        self.state[self.ea_i] = myEA
+
+        # update RS
+        if self.state[self.rs_i] == 1: # we are using a RS right now
+            # check if we want to discontinue
+            cursum = self.rf + self.state[self.ea_i]
+            if cursum <= 1:
+                curprob = self.state[self.cd_i] * self.state[self.eo_i] * ( 1 - self.state[self.c_i] )/1.5
+                thistrial = np.random.random()
+                if thistrial < curprob:
+                    # stop using the RS
+                    self.state[self.rs_i] = 0
+        else: # we are not currently using RS
+            if self.state[self.past_i] == 1: # we used it in the past
+                curval = self.state[self.cd_i] * self.state[self.eo_i] * (1 - self.state[self.c_i]) / 1.5
+                if curval <= 0.5:
+                    curprob = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0
+                    thistrial = np.random.random()
+                    if thistrial < curprob:
+                        # start using the RS again
+                        self.state[self.rs_i] = 1
+            else: # we have never used it in the past
+                if self.state[self.w_i] >= 150000:
+                    threshval = (0.65 + (1-self.state[self.o_i]))/2
+                    curval = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0
+                    if curval >= threshval:
+                        curprob = self.state[self.cd_i] * self.state[self.eo_i] * (self.rf + self.sa + self.state[self.ea_i]) / 3.0
+                        thistrial = np.random.random()
+                        if thistrial < curprob:
+                            self.state[self.rs_i] = 1
+                            self.state[self.past_i] = 1
+
+        #logstring = ""
+        #self.logger.info("%s" % (logstring))
 
     @property
     def cultural_state(self):
@@ -55,7 +129,9 @@ class EEObserver(dworp.Observer):
         self.printby = printby
 
     def step(self, now, agents, env):
-        print("%d: current number of straw users is %d" % (now,self.computenumreusablestrawusers(now, agents, env)))
+        print("%d: current number of straw users is %d, number of adopters that no longer use is %d" %
+              (now,self.computenumreusablestrawusers(now, agents, env),
+               self.discontinuedreusableusers(now,agents,env)))
         pass
 
     def computenumreusablestrawusers(self, now, agents, env):
@@ -63,6 +139,14 @@ class EEObserver(dworp.Observer):
         for agent in agents:
             if agent.state[0] > 0:
                 count = count + 1
+        return count
+
+    def discontinuedreusableusers(self, now, agents, env):
+        count = 0
+        for agent in agents:
+            if agent.state[0] == 0:
+                if agent.state[agent.past_i] == 1:
+                    count = count + 1
         return count
 
     def complete(self, now, agents, env):
@@ -92,9 +176,9 @@ class RegressionTest:
         logging.basicConfig(level=logging.WARN)
         # ensuring reproducibility by setting the seed
         np.random.seed(5769)
-        n_tsteps = 800 # because we cycle through the 100 Persons each time, this represents 80K events
+        n_tsteps = 8000
         n_agents = 1000
-        n_friends = 20
+        n_friends = 20 # each agent has this many friends (based on the n_friends people who are geographically closest)
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
         cov = np.zeros((5,5))
@@ -147,6 +231,7 @@ class RegressionTest:
             for j in range(0,len(friends)):
                 g.add_edge(i,int(friends[j]))
             curagent = Person(vs[i],14,traits)
+            agents.append(curagent)
 
         env = EEEnvironment(g)
         time = dworp.BasicTime(n_tsteps)
@@ -166,6 +251,7 @@ class RegressionTest:
         else:
             print("Regression test failed! last count should be %d" % (lastcountshouldbe))
             return False
+
 
 thistest = RegressionTest()
 thistest.test()
