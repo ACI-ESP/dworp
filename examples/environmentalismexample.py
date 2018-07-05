@@ -8,6 +8,11 @@ import igraph
 import logging
 import numpy as np
 import pdb
+try:
+    import pygame
+except ImportError:
+    # vis will be turned off
+    pass
 
 
 class Person(dworp.Agent):
@@ -154,19 +159,86 @@ class EEObserver(dworp.Observer):
 
 
 class EETerminator(dworp.Terminator):
-    def __init__(self, printby):
-        self.printby = printby
+    def __init__(self,maxwithoutchange):
+        self.numstepswithoutchange = 0
+        self.maxstepswithoutchange = maxwithoutchange
+        self.lastnumRS = 0
+        self.lastdiscontinuedRS = 0
 
     def test(self, now, agents, env):
-        # no more changes can happen when all neighboring Persons either no features in common or all features in common
-        # make sure you only check this when current_time modulo printby == 0 (otherwise too much computation)
-        if now % self.printby != 0:
-            return False
+        curnumRS = self.computenumreusablestrawusers(agents)
+        curnumdiscontinued = self.discontinuedreusableusers(agents)
+        if self.lastnumRS == curnumRS:
+            if self.lastdiscontinuedRS == curnumdiscontinued:
+                self.numstepswithoutchange = self.numstepswithoutchange + 1
+            else:
+                self.numstepswithoutchange = 0
+        else:
+            self.numstepswithoutchange = 0
+        self.lastnumRS = curnumRS
+        self.lastdiscontinuedRS = curnumdiscontinued
+        # check if we havent changed for too many steps
+        if self.numstepswithoutchange > self.maxstepswithoutchange:
+            terminate = True
         else:
             terminate = False
-            if terminate:
-                print("Terminating simulation early at time = {} because no neighboring agents can change".format(now))
-            return terminate
+        if terminate:
+            print("Terminating simulation early at time = {} because of persistent lack of change".format(now))
+        return terminate
+
+    def computenumreusablestrawusers(self, agents):
+        count = 0
+        for agent in agents:
+            if agent.state[0] > 0:
+                count = count + 1
+        return count
+
+    def discontinuedreusableusers(self, agents):
+        count = 0
+        for agent in agents:
+            if agent.state[0] == 0:
+                if agent.state[agent.past_i] == 1:
+                    count = count + 1
+        return count
+
+
+class PyGameRenderer(dworp.Observer):
+    def __init__(self, size, zoom, fps):
+        self.zoom = zoom
+        self.fps = fps
+        self.width = size[0]
+        self.height = size[1]
+
+        pygame.init()
+        pygame.display.set_caption("Reusable Straw Simulation")
+        self.screen = pygame.display.set_mode((self.zoom * self.width, self.zoom * self.height))
+        self.background = pygame.Surface((self.screen.get_size()))
+        self.background = self.background.convert()
+        self.clock = pygame.time.Clock()
+
+    def start(self, start_time, agents, env):
+        self.draw(agents)
+
+    def step(self, now, agents, env):
+        self.draw(agents)
+
+    def stop(self, now, agents, env):
+        pygame.quit()
+
+    def draw(self, agents):
+        side = self.zoom - 1
+        self.background.fill((255, 255, 255))
+        for agent in agents:
+            x = self.zoom * agent.x
+            y = self.zoom * agent.y
+            color = (255, 128, 0) if agent.color == "orange" else (0, 0, 255)
+            pygame.draw.rect(self.background, color, (x, y, side, side), 0)
+        self.screen.blit(self.background, (0, 0))
+        pygame.display.flip()
+        self.clock.tick(self.fps)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
 
 
 class RegressionTest:
@@ -237,8 +309,8 @@ class RegressionTest:
         time = dworp.BasicTime(n_tsteps)
         # ensuring reproducibility by setting the seed
         scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-        observer = EEObserver(1000)
-        term = EETerminator(1000)
+        observer = EEObserver(10)
+        term = EETerminator(10)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
 
         sim.run()
