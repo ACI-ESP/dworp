@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import os
 import subprocess
+import pdb
 # try:
 #     import pygame
 # except ImportError:
@@ -292,7 +293,8 @@ class RegressionTest:
         cov[3,:] = [0.093000 ,0.061132,0.042284,0.384400,0.098766]
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
 
-        scenariostr = "C"
+        scenariostr = "B"
+        makevis = True
 
         # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
         if scenariostr == "A":
@@ -375,7 +377,7 @@ class RegressionTest:
         myobserver = EEObserver(fhandle)
 
         #vis_flag = args.vis and 'pygame' in sys.modules
-        vis_flag = False and 'pygame' in sys.modules
+        vis_flag = makevis and 'pygame' in sys.modules
         if vis_flag:
             print("vis_flag is True")
         else:
@@ -393,10 +395,28 @@ class RegressionTest:
             pgr = PyGameRenderer(1, n_fps, n_tsteps+1)
             observer.append(pgr)
 
+        #with open("eatingout.tsv",'w') as f:
+        #    for i in range(0,n_agents):
+        #        f.write('%f\t%f' % (lat[i],lon[i]))
+        #        f.write('\t%f\n' % (eatingout[i]))
+        #    f.close()
+        initeatingout = eatingout[0:]
+
         term = EETerminator(100)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
         sim.run()
         fhandle.close()
+
+        # eatingout, age
+        age = np.random.randint(16,65,1000)
+        with open("demog.tsv",'w') as f:
+            for i in range(0,n_agents):
+                f.write('%f\t%f' % (lat[i],lon[i]))
+                f.write('\t%f\t%f' % (wealth[i],gender[i]))
+                f.write('\t%d\t%d' % (agents[i].state[0],agents[i].state[agents[i].past_i]))
+                f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\n' % (initeatingout[i],age[i],colddrinks[i],
+                                                                personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
+            f.close()
 
         if vis_flag:
             filename_list = pgr.filename_list
@@ -404,6 +424,7 @@ class RegressionTest:
             frame_delay = str(int(seconds_per_frame * 100))
             #command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim.gif']
             command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim%s.gif' % (outstring)]
+            pdb.set_trace()
             try:
                 # Use the "convert" command (part of ImageMagick) to build the animation
                 subprocess.call(command_list)
