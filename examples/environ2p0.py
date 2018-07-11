@@ -1,7 +1,6 @@
 """
 Aurora's version of the environmentalism example
-
-July 3, 2018
+doesnt do full sim
 """
 import dworp
 import igraph
@@ -22,7 +21,7 @@ import pygame
 
 class Person(dworp.Agent):
 
-    def __init__(self, vertex, numfeatures, traits, neighborverts):
+    def __init__(self, vertex, numfeatures,traits):
         super().__init__(vertex.index, numfeatures+1) # the last state remembers if we adopted RS in the past
         vertex['agent'] = self
         self.vertex = vertex
@@ -43,7 +42,6 @@ class Person(dworp.Agent):
         self.cd_i = 13
         self.past_i = 14
         self.state[self.past_i] = 0 # we start of not having adopted in the past
-        self.incidentneighbors = neighborverts
 
         # These ceiling and floor parameters are constant, so we'll compute them once here
         self.sa = self.state[self.e_i]**4
@@ -58,13 +56,11 @@ class Person(dworp.Agent):
         self.y = self.state[self.lat_i] - 37.4316
 
     def step(self, now, env):
-        # In this function we update EO, EA, and then RS (but we always start with RS first)
+        # In this function we update EO, EA, and then RS
 
         # we will need to look up the social activity levels (SA) of our neighbors as well as their
         # eating out tendency (EO) and environmental awarenesses (EA)
-        #neighbors = self.vertex.neighbors()
-        neighbors = self.incidentneighbors
-
+        neighbors = self.vertex.neighbors()
         sa_array = np.zeros((len(neighbors)))
         eo_array = np.zeros((len(neighbors)))
         ea_array = np.zeros((len(neighbors)))
@@ -82,17 +78,20 @@ class Person(dworp.Agent):
             sum_for_denom = sum_for_denom + (sa_array[i])
             if nvert["agent"].state[self.rs_i] > 0:
                 sum_for_RS = sum_for_RS + sa_array[i]
-        frac_for_RS = sum_for_RS/sum_for_denom
+        if sum_for_denom > 0:
+            frac_for_RS = sum_for_RS/sum_for_denom
+        else:
+            frac_for_RS = 0.0
 
         # update EO
         myEO = 1.0/(1.0 + (1.0 + self.rf)*sum_for_denom) * ( self.state[self.eo_i] + (1.0 + self.rf)*sum_for_EO )
         myEO = min(myEO,self.eof)
-        #self.state[self.eo_i] = myEO
+        #self.state[self.eo_i] = myEO # update later now
 
         # update EA
         myEA = 1.0 / (1.0 + (1.0 + self.rf) * sum_for_denom) * (self.state[self.ea_i] + (1.0 + self.rf) * sum_for_EA)
         myEA = max(myEA, self.eac)
-        #self.state[self.ea_i] = myEA
+        #self.state[self.ea_i] = myEA # update later now
 
         # update RS
         if self.state[self.rs_i] == 1: # we are using a RS right now
@@ -301,7 +300,8 @@ class RegressionTest:
 
         logging.basicConfig(level=logging.WARN)
         n_tsteps = 1000
-        n_tsteps = 25
+        n_tsteps = 100
+        n_tsteps = 2
         n_agents = 1000
         n_agents = 10000
         n_fps = 4
@@ -315,7 +315,7 @@ class RegressionTest:
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
 
         scenariostr = "B"
-        makevis = True
+        makevis = False
 
         # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
         if scenariostr == "A":
@@ -362,13 +362,11 @@ class RegressionTest:
         eatingout[eatingout < 0] = 0
         envaware = np.random.random((n_agents,1))
 
-        g = igraph.Graph(directed = True) # was missing this
-        #for i in range(0,n_agents):
-        #    g.add_vertex(i)
-        g.add_vertices(n_agents)
+        g = igraph.Graph(directed = True)
+        for i in range(0,n_agents):
+            g.add_vertex(i)
         vs = g.vs
         agents = []
-        edgestoadd = []
         for i in range(0,n_agents):
             traits = np.zeros((14))
             traits[0] = 0 # initially noone uses the reusable straw
@@ -386,22 +384,18 @@ class RegressionTest:
             distsq = np.power(difflat,2) + np.power(difflon,2)
             #sorted = np.argsort(distsq) # the above is a bug, returns 0 for the whole time!
             sorted = np.argsort(distsq,axis=0)
-            friends = sorted[1:(n_friends+1)]
-            neighborverts = []
-            for j in range(0,len(friends)):
-                #g.add_edge(i,int(friends[j]))
-                #g.add_edges([(i, int(friends[j]))])
-                edgestoadd.append((i, int(friends[j])))
-                neighborverts.append(vs[int(friends[j])])
-            curagent = Person(vs[i],14,traits,neighborverts)
+            friends = sorted[1:n_friends+1]
+            if False:
+                for j in range(0,len(friends)):
+                    g.add_edge(i,int(friends[j]))
+            curagent = Person(vs[i],14,traits)
             agents.append(curagent)
-        g.add_edges(edgestoadd)
 
         env = EEEnvironment(g)
         time = dworp.BasicTime(n_tsteps)
         # ensuring reproducibility by setting the seed
         scheduler = dworp.RandomOrderScheduler(np.random.RandomState(4587))
-        outname = "outputs%s.tsv" % (outstring)
+        outname = "2p0_outputs%s.tsv" % (outstring)
         fhandle = open(outname,'w')
         myobserver = EEObserver(fhandle)
 
@@ -414,7 +408,7 @@ class RegressionTest:
         # vis does not support different colors
         #colors = ["blue", "orange"]
         #params = SegregationParams(density, similarity, grid_size, seed, colors)
-        agentstatename = "usingstrawsforeachtime%s.tsv" % (outstring)
+        agentstatename = "2p0_usingstrawsforeachtime%s.tsv" % (outstring)
         outputfhandle = open(agentstatename, 'w')
         mystateobs = EEWriteStrawState(outputfhandle)
 
@@ -435,21 +429,20 @@ class RegressionTest:
         #    f.close()
         initeatingout = eatingout[0:]
 
-        with open("socialnetwork.tsv",'w') as f:
+        with open("2p0_socialnetwork.tsv",'w') as f:
             for i in range(0,n_agents):
-                #neighbors = vs[i].neighbors()
-                #neighbors = igraph.Graph.incident(g,vs[i])
-                neighbors = agents[i].incidentneighbors
-                curn = neighbors[0]
-                #f.write("%d" % (curn["agent"].agent_id))
-                f.write("%d" % (curn.index))
-                for j in range(1,len(neighbors)):
-                    curn = neighbors[j]
-                    #f.write("\t%d" % (curn["agent"].agent_id))
-                    f.write("\t%d" % (curn.index))
+                neighbors = vs[i].neighbors()
+                if len(neighbors) > 0:
+                    curn = neighbors[0]
+                    #f.write("%d" % (curn["agent"].agent_id))
+                    f.write("%d" % (curn.index))
+                    for j in range(1,len(neighbors)):
+                        curn = neighbors[j]
+                        #f.write("\t%d" % (curn["agent"].agent_id))
+                        f.write("\t%d" % (curn.index))
                 f.write("\n")
             f.close()
-
+        print("after writing social network file")
         pdb.set_trace()
 
         term = EETerminator(100)
@@ -464,34 +457,28 @@ class RegressionTest:
         age = np.random.randint(16,65,n_agents)
 
         ts1_strawstates = mystateobs.savedict[1]
-        num_tsteps_to_output = 10
-        with open("fortestFCI.tsv",'w') as f:
-            f.write("lat\tlon\tincome\tgender\teatsout\tage\tcolddrinks\tO\tC\tE\tA\tN")
-            for k in range(0, num_tsteps_to_output):
-                f.write('\tt%d' % (k))
-            f.write('\n')
+        ts2_strawstates = mystateobs.savedict[1]
+        with open("2p0_fortestFCI.tsv",'w') as f:
+            f.write("lat\tlon\tincome\teatsout\tage\tcolddrinks\tO\tC\tE\tA\tN\tStrawAtT1\n")
             for i in range(0,n_agents):
                 f.write('%f\t%f' % (lat[i],lon[i]))
-                f.write('\t%f\t%f' % (wealth[i],gender[i]))
+                f.write('\t%f' % (wealth[i]))
                 f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f' % (initeatingout[i],age[i],colddrinks[i],
                                                                 personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
-                for k in range(0,num_tsteps_to_output):
-                    curts_strawstates = mystateobs.savedict[int(k+1)]
-                    f.write('\t%d' % (int(curts_strawstates[i])))
-                f.write('\n')
+                f.write('\t%d\n' % (int(ts1_strawstates[i])))
             f.close()
 
         print("done writing fortestFCI")
         pdb.set_trace()
 
-        with open("demog.tsv",'w') as f:
-            for i in range(0,n_agents):
-                f.write('%f\t%f' % (lat[i],lon[i]))
-                f.write('\t%f\t%f' % (wealth[i],gender[i]))
-                f.write('\t%d\t%d' % (agents[i].state[0],agents[i].state[agents[i].past_i]))
-                f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\n' % (initeatingout[i],age[i],colddrinks[i],
-                                                                personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
-            f.close()
+        # with open("demog.tsv",'w') as f:
+        #     for i in range(0,n_agents):
+        #         f.write('%f\t%f' % (lat[i],lon[i]))
+        #         f.write('\t%f\t%f' % (wealth[i],gender[i]))
+        #         f.write('\t%d\t%d' % (agents[i].state[0],agents[i].state[agents[i].past_i]))
+        #         f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\n' % (initeatingout[i],age[i],colddrinks[i],
+        #                                                         personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
+        #     f.close()
 
         if vis_flag:
             filename_list = pgr.filename_list
