@@ -183,16 +183,26 @@ class EEWriteStrawState(dworp.Observer):
     def __init__(self, fhandle):
         self.fhandle = fhandle
         self.savedict = dict()
+        self.savedictEO = dict()
+        self.savedictEA = dict()
 
     def step(self, now, agents, env):
         self.fhandle.write("%d\t%d" % (now, agents[0].state[0]))
         state_array = []
         state_array.append(agents[0].state[0])
+        state_array_EO = []
+        state_array_EO.append(agents[0].state[agents[0].eo_i])
+        state_array_EA = []
+        state_array_EA.append(agents[0].state[agents[0].ea_i])
         for i in range(1,len(agents)):
             self.fhandle.write("\t%d" % (agents[i].state[0]))
             state_array.append(agents[i].state[0])
+            state_array_EO.append(agents[i].state[agents[0].eo_i])
+            state_array_EA.append(agents[i].state[agents[0].ea_i])
         self.fhandle.write("\n")
         self.savedict[now] = np.array(state_array)
+        self.savedictEO[now] = np.array(state_array_EO)
+        self.savedictEA[now] = np.array(state_array_EA)
 
 
 class EETerminator(dworp.Terminator):
@@ -434,6 +444,7 @@ class RegressionTest:
         #        f.write('\t%f\n' % (eatingout[i]))
         #    f.close()
         initeatingout = eatingout[0:]
+        initenvaware = envaware[0:]
 
         with open("socialnetwork.tsv",'w') as f:
             for i in range(0,n_agents):
@@ -465,23 +476,55 @@ class RegressionTest:
 
         ts1_strawstates = mystateobs.savedict[1]
         num_tsteps_to_output = 10
-        with open("fortestFCI.tsv",'w') as f:
-            f.write("lat\tlon\tincome\tgender\teatsout\tage\tcolddrinks\tO\tC\tE\tA\tN")
+        with open("fortestFCI.tsv", 'w') as f:
+            f.write("lat\tlon\tincome\tgender\teatsout\tage\tcolddrinks\tplasticawareness\tO\tC\tE\tA\tN")
             for k in range(0, num_tsteps_to_output):
                 f.write('\tt%d' % (k))
             f.write('\n')
-            for i in range(0,n_agents):
-                f.write('%f\t%f' % (lat[i],lon[i]))
-                f.write('\t%f\t%f' % (wealth[i],gender[i]))
-                f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f' % (initeatingout[i],age[i],colddrinks[i],
-                                                                personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
-                for k in range(0,num_tsteps_to_output):
-                    curts_strawstates = mystateobs.savedict[int(k+1)]
+            for i in range(0, n_agents):
+                f.write('%f\t%f' % (lat[i], lon[i]))
+                f.write('\t%f\t%f' % (wealth[i], gender[i]))
+                f.write(
+                    '\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f' % (initeatingout[i], age[i], colddrinks[i], initenvaware[i],
+                                                              personalities[i, 0], personalities[i, 1],
+                                                              personalities[i, 2], personalities[i, 3],
+                                                              personalities[i, 4]))
+                for k in range(0, num_tsteps_to_output):
+                    curts_strawstates = mystateobs.savedict[int(k + 1)]
                     f.write('\t%d' % (int(curts_strawstates[i])))
                 f.write('\n')
             f.close()
 
         print("done writing fortestFCI")
+        pdb.set_trace()
+
+        num_tsteps_to_output = 20
+        with open("EOdata.tsv", 'w') as f:
+            f.write("lat\tlon")
+            for k in range(0, num_tsteps_to_output):
+                f.write('\teatsout%d' % (k))
+            f.write('\n')
+            for i in range(0, n_agents):
+                f.write('%f\t%f' % (lat[i], lon[i]))
+                for k in range(0, num_tsteps_to_output):
+                    curts_strawstates = mystateobs.savedictEO[int(k + 1)]
+                    f.write('\t%f' % (curts_strawstates[i]))
+                f.write('\n')
+            f.close()
+        with open("PAdata.tsv", 'w') as f:
+            f.write("lat\tlon")
+            for k in range(0, num_tsteps_to_output):
+                f.write('\tPA%d' % (k))
+            f.write('\n')
+            for i in range(0, n_agents):
+                f.write('%f\t%f' % (lat[i], lon[i]))
+                for k in range(0, num_tsteps_to_output):
+                    curts_strawstates = mystateobs.savedictEA[int(k + 1)]
+                    f.write('\t%f' % (curts_strawstates[i]))
+                f.write('\n')
+            f.close()
+
+        print("done writing EOEAdata")
         pdb.set_trace()
 
         with open("demog.tsv",'w') as f:
