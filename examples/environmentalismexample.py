@@ -1,6 +1,29 @@
 """
-Aurora's version of the environmentalism example
+JHU/APL's red blue challenge, environmentalism product adoption example
 
+Major Dependencies: Dworp, (pip install dworp, source code available at https://github.com/ACI-ESP/dworp)
+                  *  pygame (for plotting)
+                  *  ImageMagick, to run commandline convert to create an animated gif from output png images
+    (note that pygame and ImageMagick are optional, the script will still run, but plotting would be limited)
+
+Usage:
+  (debugging mode, default) > python -m pdb environmentalismexample.py vsn=A vis=0
+  (nondebugging mode) > python environmentalismexample.py vsn=B vis=1 dbg=0
+
+  The input argument vsn = A, B, or C determines which scenario is run. The default is B.
+  The input argument vis = 0 or 1 determines whether to try to plot (0 = no, 1 = yes, default is 1)
+
+Scenario: A group of social science researchers (you) would like to study how the movement to get people to use
+  reusable straws is spreading.
+
+Questions Posed:
+  What factors into a person’s decision to change their behavior and use reusable straws?
+  What could be done to increase the usage of reusable straws?
+
+Aurora.Schmidt@jhuapl.edu
+240-228-1635
+Christian.Sun@jhuapl.edu
+Aspire Intern
 July 3, 2018
 """
 import dworp
@@ -11,13 +34,12 @@ import sys
 import os
 import subprocess
 import pdb
-# try:
-#     import pygame
-# except ImportError:
-#     # vis will be turned off
-#     print("error importing pygame: vis will be turned off")
-#     pass
-import pygame
+try:
+    import pygame
+except ImportError:
+    # vis will be turned off
+    print("error importing pygame: vis will be turned off")
+    pass
 
 
 class Person(dworp.Agent):
@@ -125,16 +147,9 @@ class Person(dworp.Agent):
                             self.state[self.past_i] = 1
 
         # update EO
-        self.state[self.eo_i] = myEO # update later now
+        self.state[self.eo_i] = myEO # updated later now
         # update EA
-        self.state[self.ea_i] = myEA # update later now
-
-    @property
-    def cultural_state(self):
-        logstring = ""
-        for i in range(0,len(self.state)):
-            logstring = "%s%d" % (logstring,int(self.state[i]))
-        return logstring
+        self.state[self.ea_i] = myEA # updated later now
 
 
 class EEEnvironment(dworp.NetworkEnvironment):
@@ -306,48 +321,87 @@ class PyGameRenderer(dworp.Observer):
 
 
 class RegressionTest:
-    def test(self):
-        lastcountshouldbe = 4
+    def test(self, *args):
+
+        scenariostr = "B" # default is vsn = B
+        makevis = True # default is vis = 1
+        dbg = True # default is vis = 1
+
+        for arg in args:
+            k = arg.split("=")[0]
+            v = arg.split("=")[1]
+            k = k.strip().lower()
+            v = v.strip().lower()
+            if k == 'vsn':
+                if v=='a':
+                    print("Keyword argument: %s = %s specifies to use scenario A" % (k, v))
+                    scenariostr = "A"
+                    lastcountshouldbe = 5125
+                elif v=='b':
+                    print("Keyword argument: %s = %s specifies to use scenario B" % (k, v))
+                    scenariostr = "B"
+                    lastcountshouldbe = 5946 #6061
+                elif v=='c':
+                    print("Keyword argument: %s = %s specifies to use scenario C" % (k, v))
+                    scenariostr = "C"
+                    lastcountshouldbe = 6782
+                else:
+                    print("Keyword argument: %s = %s Error, unrecognized scenario, using default of B" % (k, v))
+            elif k == 'vis':
+                if (v=='0') or (v=='no') or (v=='false'):
+                    print("Keyword argument: %s = %s specifies not to plot" % (k, v))
+                    makevis = False
+                elif (v=='1') or (v=='yes') or (v=='true'):
+                    print("Keyword argument: %s = %s specifies to make plots" % (k, v))
+                    makevis = True
+                else:
+                    print("Keyword argument: %s = %s Error, unrecognized vis argument, using default of 0" % (k, v))
+            elif k == 'dbg':
+                if (v=='0') or (v=='no') or (v=='false'):
+                    print("Keyword argument: %s = %s specifies not to use python debugging mode" % (k, v))
+                    dbg = False
+                elif (v=='1') or (v=='yes') or (v=='true'):
+                    print("Keyword argument: %s = %s specifies to use python debugging with stops (enter 'r' to continue)" % (k, v))
+                    dbg = True
+                else:
+                    print("Keyword argument: %s = %s Error, unrecognized dbg argument, using default of 1" % (k, v))
+            else:
+                print("Unrecognized keyword in %s = %s . ignoring..." % (k, v))
+        if dbg:
+            pdb.set_trace()
+
+        # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
+        if scenariostr == "A": # Scenario A
+            outstring = "_A"
+            # ensuring reproducibility by setting the seed
+            np.random.seed(45)
+            mean_openness = 0.25
+        elif scenariostr == "B": # Scenario B
+            # ensuring reproducibility by setting the seed
+            np.random.seed(347)
+            outstring = "_B"
+            mean_openness = 0.50
+        else: # Scenario C
+            outstring = "_C"
+            # ensuring reproducibility by setting the seed
+            np.random.seed(5769)
+            mean_openness = 0.75
 
         logging.basicConfig(level=logging.WARN)
-        n_tsteps = 1000
         n_tsteps = 25
-        n_agents = 1000
+        #n_agents = 1000
         n_agents = 10000
-        n_fps = 4
+        n_fps = 4 # a parameter for gif generation
+        n_friends = 5  # constant
 
         mu = np.array([0.544, 0.504, 0.466, 0.482, 0.304])
+        mu[0] = mean_openness
         cov = np.zeros((5,5))
         cov[0,:] = [0.360000 ,0.066120,0.059520,0.093000,0.092040]
         cov[1,:] = [0.066120 ,0.336400,0.061132,0.061132,0.000000]
         cov[2,:] = [0.059520 ,0.061132,0.384400,0.042284,-0.021948]
         cov[3,:] = [0.093000 ,0.061132,0.042284,0.384400,0.098766]
         cov[4,:] = [0.092040 ,0.000000,-0.021948,0.098766,0.348100]
-
-        scenariostr = "B"
-        makevis = True
-
-        # n_frields: each agent has this many friends (based on the n_friends people who are geographically closest)
-        if scenariostr == "A":
-            n_friends = 2  # Scenario A
-            outstring = "_A"
-            # ensuring reproducibility by setting the seed
-            np.random.seed(45)
-            mu[0] = 0.25
-        elif scenariostr == "B":
-            n_friends = 5  # Scenario B
-            # ensuring reproducibility by setting the seed
-            np.random.seed(347)
-            outstring = "_B"
-            mu[0] = 0.50
-        else:
-            n_friends = 20  # Scenario C
-            outstring = "_C"
-            # ensuring reproducibility by setting the seed
-            np.random.seed(5769)
-            mu[0] = 0.75
-
-        n_friends = 5  # constant
 
         personalities = np.random.multivariate_normal(mu,cov,n_agents)
         personalities[personalities > 1] = 1.0
@@ -359,14 +413,12 @@ class RegressionTest:
         offsets_lon = np.random.random((n_agents,1))
         lat = offsets_lon + 37.4316 # deg north
         lon = offsets_lat + 78.6569 # deg west
-        gender = np.random.randint(0,1,(n_agents,1))
-        education = np.random.randint(0,4,(n_agents,1))
-        #colddrinks = np.random.normal(0.80,0.15,n_agents)
+        gender = np.random.randint(0,1+1,(n_agents,1))
+        education = np.random.randint(0,4+1,(n_agents,1))
         colddrinks = np.random.normal(0.90, 0.1, n_agents)
         colddrinks[colddrinks > 1] = 1
         colddrinks[colddrinks < 0] = 0
 
-        #eatingout = np.random.normal(0.70,0.10,n_agents)
         eatingout = np.random.normal(0.90,0.10,n_agents)
         eatingout[eatingout > 1] = 1
         eatingout[eatingout < 0] = 0
@@ -415,15 +467,11 @@ class RegressionTest:
         fhandle = open(outname,'w')
         myobserver = EEObserver(fhandle)
 
-        #vis_flag = args.vis and 'pygame' in sys.modules
         vis_flag = makevis and 'pygame' in sys.modules
         if vis_flag:
             print("vis_flag is True")
         else:
             print("vis_flag is False")
-        # vis does not support different colors
-        #colors = ["blue", "orange"]
-        #params = SegregationParams(density, similarity, grid_size, seed, colors)
         agentstatename = "usingstrawsforeachtime%s.tsv" % (outstring)
         outputfhandle = open(agentstatename, 'w')
         mystateobs = EEWriteStrawState(outputfhandle)
@@ -438,30 +486,23 @@ class RegressionTest:
             pgr = PyGameRenderer(1, n_fps, n_tsteps+1)
             observer.append(pgr)
 
-        #with open("eatingout.tsv",'w') as f:
-        #    for i in range(0,n_agents):
-        #        f.write('%f\t%f' % (lat[i],lon[i]))
-        #        f.write('\t%f\n' % (eatingout[i]))
-        #    f.close()
         initeatingout = eatingout[0:]
         initenvaware = envaware[0:]
 
         with open("socialnetwork.tsv",'w') as f:
             for i in range(0,n_agents):
-                #neighbors = vs[i].neighbors()
-                #neighbors = igraph.Graph.incident(g,vs[i])
                 neighbors = agents[i].incidentneighbors
                 curn = neighbors[0]
-                #f.write("%d" % (curn["agent"].agent_id))
                 f.write("%d" % (curn.index))
                 for j in range(1,len(neighbors)):
                     curn = neighbors[j]
-                    #f.write("\t%d" % (curn["agent"].agent_id))
                     f.write("\t%d" % (curn.index))
                 f.write("\n")
             f.close()
 
-        pdb.set_trace()
+        print("Finished initializing agents")
+        if dbg:
+            pdb.set_trace()
 
         term = EETerminator(100)
         sim = dworp.BasicSimulation(agents, env, time, scheduler, observer,terminator=term)
@@ -470,13 +511,13 @@ class RegressionTest:
         outputfhandle.close()
 
         print("done with sim")
-        pdb.set_trace()
-        # eatingout, age
-        age = np.random.randint(16,65,n_agents)
+        if dbg:
+            pdb.set_trace()
+        # age
+        age = np.random.randint(16,65+1,n_agents) # generate random ages for the agents, because TA2 team requested age
 
-        ts1_strawstates = mystateobs.savedict[1]
         num_tsteps_to_output = 10
-        with open("fortestFCI.tsv", 'w') as f:
+        with open("fortestFCI%s.tsv" % (outstring), 'w') as f:
             f.write("lat\tlon\tincome\tgender\teatsout\tage\tcolddrinks\tplasticawareness\tO\tC\tE\tA\tN")
             for k in range(0, num_tsteps_to_output):
                 f.write('\tt%d' % (k))
@@ -495,11 +536,12 @@ class RegressionTest:
                 f.write('\n')
             f.close()
 
-        print("done writing fortestFCI")
-        pdb.set_trace()
+        print("done writing fortestFCI%s.tsv" % (outstring))
+        if dbg:
+            pdb.set_trace()
 
         num_tsteps_to_output = 20
-        with open("EOdata.tsv", 'w') as f:
+        with open("EOdata%s.tsv" % (outstring), 'w') as f: #eatingout data for the first timesteps
             f.write("lat\tlon")
             for k in range(0, num_tsteps_to_output):
                 f.write('\teatsout%d' % (k))
@@ -511,7 +553,7 @@ class RegressionTest:
                     f.write('\t%f' % (curts_strawstates[i]))
                 f.write('\n')
             f.close()
-        with open("PAdata.tsv", 'w') as f:
+        with open("PAdata%s.tsv" % (outstring), 'w') as f: #plasticawareness (environmentalawareness) data for the first timesteps
             f.write("lat\tlon")
             for k in range(0, num_tsteps_to_output):
                 f.write('\tPA%d' % (k))
@@ -524,37 +566,28 @@ class RegressionTest:
                 f.write('\n')
             f.close()
 
-        print("done writing EOEAdata")
-        pdb.set_trace()
-
-        with open("demog.tsv",'w') as f:
-            for i in range(0,n_agents):
-                f.write('%f\t%f' % (lat[i],lon[i]))
-                f.write('\t%f\t%f' % (wealth[i],gender[i]))
-                f.write('\t%d\t%d' % (agents[i].state[0],agents[i].state[agents[i].past_i]))
-                f.write('\t%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\n' % (initeatingout[i],age[i],colddrinks[i],
-                                                                personalities[i, 0],personalities[i,1],personalities[i,2],personalities[i,3],personalities[i,4]))
-            f.close()
+        print("done writing EO and PA data")
+        if dbg:
+            pdb.set_trace()
 
         if vis_flag:
             filename_list = pgr.filename_list
             seconds_per_frame = 1.0/n_fps
             frame_delay = str(int(seconds_per_frame * 100))
-            #command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim.gif']
             command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim%s.gif' % (outstring)]
-            pdb.set_trace()
+            gif_was_successful = False
             try:
                 # Use the "convert" command (part of ImageMagick) to build the animation
                 subprocess.call(command_list)
+                gif_was_successful = True
             except:
-                print("couldnt create the animation")
+                print("couldnt create the animation. Probably ImageMagick is not installed.")
                 pass
             # Earlier, we saved an image file for each frame of the animation. Now
             # that the animation is assembled, we can (optionally) delete those files
-            if True:
+            if gif_was_successful:
                 for filename in filename_list:
                     os.remove(filename)
-            return
 
         lastcount = myobserver.computenumreusablestrawusers(0,agents,env)
         print("Last Count = %d" % (lastcount))
@@ -566,5 +599,17 @@ class RegressionTest:
             return False
 
 
-thistest = RegressionTest()
-thistest.test()
+#thistest = RegressionTest()
+#thistest.test()
+
+
+if __name__ == "__main__":
+    thistest = RegressionTest()
+    if len(sys.argv) > 1:
+        # There are keyword arguments
+        #main(*sys.argv[1:])
+        thistest.test(*sys.argv[1:])
+    else:
+        # There are no keyword arguments
+        #main()
+        thistest.test()
