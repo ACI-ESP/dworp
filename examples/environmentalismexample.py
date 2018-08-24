@@ -108,12 +108,14 @@ class Person(dworp.Agent):
 
         # update EO
         myEO = 1.0/(1.0 + (1.0 + self.rf)*sum_for_denom) * ( self.state[self.eo_i] + (1.0 + self.rf)*sum_for_EO )
-        myEO = min(myEO,self.eof)
+        myEO = min(myEO,self.eof) # BUG! This should be a max, found 8/20/18, Aurora
+        # ( this is consistent with what is in the docs, but isn't operating as a floor, but rather a ceiling)
         #self.state[self.eo_i] = myEO
 
         # update EA
         myEA = 1.0 / (1.0 + (1.0 + self.rf) * sum_for_denom) * (self.state[self.ea_i] + (1.0 + self.rf) * sum_for_EA)
-        myEA = max(myEA, self.eac)
+        myEA = max(myEA, self.eac) # BUG! This should be a min, found 8/20/18, Aurora
+        # ( this is consistent with what is in the docs, but isn't operating as a ceiling, but rather a floor)
         #self.state[self.ea_i] = myEA
 
         # update RS
@@ -324,6 +326,7 @@ class RegressionTest:
     def test(self, *args):
 
         scenariostr = "B" # default is vsn = B
+        lastcountshouldbe = 5946 #6061
         makevis = True # default is vis = 1
         dbg = True # default is vis = 1
 

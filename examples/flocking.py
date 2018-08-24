@@ -21,6 +21,9 @@ import numpy as np
 from operator import itemgetter
 import pygame
 import statistics
+import os
+import subprocess
+import pdb
 
 
 class Point2d:
@@ -202,7 +205,7 @@ class FlockingObserver(dworp.Observer):
 
 
 class PyGameRenderer(dworp.Observer):
-    def __init__(self, size, fps):
+    def __init__(self, size, fps, frames_in_anim):
         self.zoom = 5
         self.fps = fps
         self.width = size[0]
@@ -214,6 +217,9 @@ class PyGameRenderer(dworp.Observer):
         self.background = pygame.Surface((self.screen.get_size()))
         self.background = self.background.convert()
         self.clock = pygame.time.Clock()
+        self.filename_list = [os.path.join('temp' + str(n) + '.png')
+                         for n in range(frames_in_anim)]
+        self.frame = 0
 
     def start(self, now, agents, env):
         self.draw(agents)
@@ -235,6 +241,8 @@ class PyGameRenderer(dworp.Observer):
         self.screen.blit(self.background, (0, 0))
         pygame.display.flip()
         self.clock.tick(self.fps)
+        pygame.image.save(self.screen, self.filename_list[self.frame])
+        self.frame = self.frame + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
@@ -251,7 +259,8 @@ if __name__ == "__main__":
     parser.add_argument("--max-separate-turn", help="maximum turn to separate (0-20)", default=1.5, type=float)
     parser.add_argument("--max-align-turn", help="maximum turn to align (0-20)", default=5.0, type=float)
     parser.add_argument("--max-cohere-turn", help="maximum turn to cohere (0-20)", default=3.0, type=float)
-    parser.add_argument("--steps", help="number of steps in simulation", default=500, type=int)
+    #parser.add_argument("--steps", help="number of steps in simulation", default=500, type=int)
+    parser.add_argument("--steps", help="number of steps in simulation", default=100, type=int)
     parser.add_argument("--size", help="grid size formatted as XXXxYYY", default="100x100")
     parser.add_argument("--fps", help="frames per second", default="20", type=int)
     parser.add_argument("--seed", help="seed of RNG", default=42, type=int)
@@ -266,11 +275,34 @@ if __name__ == "__main__":
     assert(0 <= args.max_cohere_turn <= 20)
     args.area_size = [int(dim) for dim in args.size.split("x")]
 
+    pgr = PyGameRenderer(args.area_size, args.fps, 100+1)
+
     observer = dworp.ChainedObserver(
         FlockingObserver(),
-        PyGameRenderer(args.area_size, args.fps),
+        pgr,
     )
 
     # create and run one realization of the simulation
     sim = FlockingSimulation(args, observer)
     sim.run()
+
+    n_fps = args.fps
+    outstring = 'flockingviz'
+
+    filename_list = pgr.filename_list
+    seconds_per_frame = 1.0 / n_fps
+    frame_delay = str(int(seconds_per_frame * 100))
+    command_list = ['convert', '-delay', frame_delay, '-loop', '0'] + filename_list + ['anim%s.gif' % (outstring)]
+    gif_was_successful = False
+    try:
+        # Use the "convert" command (part of ImageMagick) to build the animation
+        subprocess.call(command_list)
+        gif_was_successful = True
+    except:
+        print("couldnt create the animation. Probably ImageMagick is not installed.")
+        pass
+    # Earlier, we saved an image file for each frame of the animation. Now
+    # that the animation is assembled, we can (optionally) delete those files
+    if gif_was_successful:
+        for filename in filename_list:
+            os.remove(filename)
