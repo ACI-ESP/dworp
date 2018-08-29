@@ -66,7 +66,7 @@ class PoissonScheduler(Scheduler):
     """
     Calculates update times for a set of users that will be chosen according to the model for Poisson arrivals.
     Each user will wake up at exponentially distributed random wait times, with a uniform parameter lambda, that
-    is constant over time and constant across users. Times are all modulo one second.
+    is constant over time and constant across users. Times are all integer-valued (could be interpreted as seconds).
 
     Args:
         size (int): size of the sample (i.e., the number of actors/agents)
@@ -78,13 +78,18 @@ class PoissonScheduler(Scheduler):
     def __init__(self, size, rng, t0, tN, lmda):
         self.size = size
         self.rng = rng
+        self.t0 = t0
         self.tN = tN
         self.lmda = lmda
         thisschedule = self.create_schedule(self, size, rng, t0, tN, lmda)
         self.schedule_dict = thisschedule
 
     def step(self, now, agents, env):
-        thistimeagentinds = self.schedule_dict[now]
+        try:
+            thistimeagentinds = self.schedule_dict[now]
+        except KeyError:
+            print("Error in PoissonScheduler, calling step with a time that is not in the schedule, %f" % (now))
+            raise("Error in PoissonScheduler, calling step with a time that is not in the schedule")
         return thistimeagentinds
 
     def create_schedule(self, size, rng, t0, tN, lmda):
