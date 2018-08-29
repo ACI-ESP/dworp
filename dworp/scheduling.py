@@ -71,7 +71,7 @@ class PoissonScheduler(Scheduler):
     Args:
         size (int): size of the sample (i.e., the number of actors/agents)
         rng (numpy.random.RandomState): numpy random generator
-        t0: Overall period start time
+        t0: Overall period start time (we ensure nothing is scheduled for this time)
         tN: Overall period stop time (exclusive)
         lmda: Lambda parameter for the exponential samples
     """
@@ -81,7 +81,7 @@ class PoissonScheduler(Scheduler):
         self.t0 = t0
         self.tN = tN
         self.lmda = lmda
-        thisschedule = self.create_schedule(self, size, rng, t0, tN, lmda)
+        thisschedule = self.create_schedule(size, t0, tN, lmda)
         self.schedule_dict = thisschedule
 
     def step(self, now, agents, env):
@@ -92,18 +92,21 @@ class PoissonScheduler(Scheduler):
             raise("Error in PoissonScheduler, calling step with a time that is not in the schedule")
         return thistimeagentinds
 
-    def create_schedule(self, size, rng, t0, tN, lmda):
+    def create_schedule(self, size, t0, tN, lmda):
         # note that the time_dict returned is an ordered dict with keys the integer-valued times
         # Loop through all users and generate login times from their start time to tN
         times = []
         for i in range(0,size):
             t = t0
-            while t < tN:
-                new_t = self.rng.exponential(scale=lmda)
-                new_t = round(new_t)
-                if new_t < tN:
-                    t = new_t
-                    times.append((i, t))
+            counter = 0
+            while t < tN and counter < 1e4:
+                counter = counter + 1
+                new_increment = self.rng.exponential(scale=lmda)
+                integer_increment = round(new_increment)
+                if integer_increment > 0:
+                    t = t + integer_increment
+                    if t < tN:
+                        times.append((i, t))
 
         # Sort the times (takes n*log(n))
         times = sorted(times, key=lambda x: x[1])

@@ -5,6 +5,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 import logging
+import pdb
 
 
 class Time(Iterator):
@@ -60,17 +61,21 @@ class ScheduledTime(Time):
     Args:
         scheduledtimes (array): the array of times in the predetermined schedule (from the key of the schedule dict)
     """
-    def __init__(self, scheduledtimes):
+    def __init__(self, scheduledtimes, start=0):
         self.scheduledtimes = scheduledtimes
         self.num_steps = len(scheduledtimes)
-        self.time = scheduledtimes[0]-1
-        self.step_count = -1
+        self.time = start
+        self.start_time = start
+        self.step_count = 0
 
     def __next__(self):
         self.step_count += 1
-        if self.step_count > self.num_steps:
+        if self.step_count >= self.num_steps:
             raise StopIteration
-        self.time = self.scheduledtimes[self.step_count]
+        try:
+            self.time = self.scheduledtimes[self.step_count]
+        except Exception as e:
+            pdb.set_trace()
         return self.time
 
 

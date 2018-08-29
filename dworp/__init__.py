@@ -5,7 +5,7 @@
 from .agent import Agent, SelfNamingAgent, TwoStageAgent, IdentifierHelper
 from .environment import Environment, NullEnvironment, NetworkEnvironment
 from .observer import Observer, ChainedObserver, KeyPauseObserver, PauseObserver, PauseAtEndObserver
-from .scheduling import Scheduler, BasicScheduler, RandomOrderScheduler, RandomSampleScheduler
+from .scheduling import Scheduler, BasicScheduler, RandomOrderScheduler, RandomSampleScheduler, PoissonScheduler
 from .simulation import Simulation, BasicSimulation, TwoStageSimulation
 from .space import Grid
-from .time import Time, BasicTime, InfiniteTime, Terminator
+from .time import Time, BasicTime, InfiniteTime, Terminator, ScheduledTime
