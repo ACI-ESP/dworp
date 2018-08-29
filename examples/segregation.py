@@ -218,5 +218,8 @@ if __name__ == "__main__":
     if vis_flag:
         observer.append(dworp.PauseAtEndObserver(3))
         observer.append(PyGameRenderer(grid_size, 10, args.fps))
+        print("vis is True")
+    else:
+        print("vis is false")
     sim = SegregationSimulation(params, observer)
     sim.run()
