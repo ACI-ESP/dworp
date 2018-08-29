@@ -4,7 +4,8 @@
 
 from abc import ABC, abstractmethod
 import logging
-
+from collections import OrderedDict
+from itertools import groupby
 
 class Scheduler(ABC):
     """Scheduling agents
@@ -60,3 +61,52 @@ class RandomSampleScheduler(Scheduler):
 
     def step(self, now, agents, env):
         return self.rng.permutation(len(agents))[:self.size]
+
+class PoissonScheduler(Scheduler):
+    """
+    Calculates update times for a set of users that will be chosen according to the model for Poisson arrivals.
+    Each user will wake up at exponentially distributed random wait times, with a uniform parameter lambda, that
+    is constant over time and constant across users. Times are all modulo one second.
+
+    Args:
+        size (int): size of the sample (i.e., the number of actors/agents)
+        rng (numpy.random.RandomState): numpy random generator
+        t0: Overall period start time
+        tN: Overall period stop time (exclusive)
+        lmda: Lambda parameter for the exponential samples
+    """
+    def __init__(self, size, rng, t0, tN, lmda):
+        self.size = size
+        self.rng = rng
+        self.tN = tN
+        self.lmda = lmda
+        thisschedule = self.create_schedule(self, size, rng, t0, tN, lmda)
+        self.schedule_dict = thisschedule
+
+    def step(self, now, agents, env):
+        thistimeagentinds = self.schedule_dict[now]
+        return thistimeagentinds
+
+    def create_schedule(self, size, rng, t0, tN, lmda):
+        # note that the time_dict returned is an ordered dict with keys the integer-valued times
+        # Loop through all users and generate login times from their start time to tN
+        times = []
+        for i in range(0,size):
+            t = t0
+            while t < tN:
+                new_t = self.rng.exponential(scale=lmda)
+                new_t = round(new_t)
+                if new_t < tN:
+                    t = new_t
+                    times.append((i, t))
+
+        # Sort the times (takes n*log(n))
+        times = sorted(times, key=lambda x: x[1])
+
+        # Since some users will have identical login times, group by time and create an OrderedDict by time with entries
+        # containing a list of users logging in at that time
+        time_dict = OrderedDict()
+        for k, v in groupby(times, lambda x: x[1]):
+            time_dict[k] = list([x[0] for x in v])
+
+        return time_dict
