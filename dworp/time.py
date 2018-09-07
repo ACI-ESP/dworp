@@ -69,13 +69,10 @@ class ScheduledTime(Time):
         self.step_count = 0
 
     def __next__(self):
-        self.step_count += 1
         if self.step_count >= self.num_steps:
             raise StopIteration
-        try:
-            self.time = self.scheduledtimes[self.step_count]
-        except Exception as e:
-            pdb.set_trace()
+        self.time = self.scheduledtimes[self.step_count]
+        self.step_count += 1
         return self.time
 
 
