@@ -35,7 +35,7 @@ class Patch:
         return 'Patch({}, {})'.format(self.sugar, self.max_sugar)
 
 
-class Turtle(dworp.SelfNamingAgent):
+class SugarAgent(dworp.SelfNamingAgent):
     def __init__(self, sugar, metabolism, vision):
         super().__init__(0)
 
@@ -55,11 +55,15 @@ class Turtle(dworp.SelfNamingAgent):
         distance_by_location = {location: env.distance_from(self, location) for location in empty_locations}
 
         # pick the best locations (the ones with the most sugar)
-        max_sugar = max(sugar_by_location.values())
+        max_sugar = max(map(sugar_by_location.get, empty_locations))
         best_locations = list(filter(lambda location: sugar_by_location[location] >= max_sugar, empty_locations))
 
+        # pick the winner locations (the ones closest to where the agent is)
+        min_distance = min(map(distance_by_location.get, best_locations))
+        winners = list(filter(lambda location: distance_by_location[location] <= min_distance, best_locations))
+
         # move to the closest best location
-        env.move(self, min(best_locations, key=distance_by_location.get))
+        env.move(self, winners[env.rng.choice(range(len(winners)))])
 
     def eat(self, env):
         patch = env.get_patch_for(self)
@@ -74,8 +78,10 @@ class Turtle(dworp.SelfNamingAgent):
 
 
 class SugarscapeEnvironment(dworp.Environment):
-    def __init__(self, sugar_map=DEFAULT_SUGAR_MAP):
+    def __init__(self, rng, sugar_map=DEFAULT_SUGAR_MAP):
         super().__init__(0)
+
+        self.rng = rng
 
         self.width = len(sugar_map[0])
         self.height = len(sugar_map)
@@ -155,7 +161,7 @@ class SugarscapeSimulation(dworp.BasicSimulation):
     def __init__(self, params, observer):
         self.rng = np.random.RandomState(params.seed)
 
-        env = SugarscapeEnvironment()
+        env = SugarscapeEnvironment(self.rng)
 
         # construct our agents
         agents = [self.create_turtle() for _ in range(params.pop)]
@@ -174,7 +180,7 @@ class SugarscapeSimulation(dworp.BasicSimulation):
         sugar = self.rng.randint(5, 25)
         metabolism = self.rng.randint(1, 4)
         vision = self.rng.randint(1, 6)
-        return Turtle(sugar, metabolism, vision)
+        return SugarAgent(sugar, metabolism, vision)
 
 
 class SugarscapeObserver(dworp.Observer):
@@ -243,7 +249,7 @@ if __name__ == "__main__":
 
     # parse command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pop", help="population (1-1000)", default=100, type=int)
+    parser.add_argument("--pop", help="population (1-1000)", default=400, type=int)
     parser.add_argument("--fps", help="frames per second", default="20", type=int)
     parser.add_argument("--seed", help="seed of RNG", default=42, type=int)
     args = parser.parse_args()
