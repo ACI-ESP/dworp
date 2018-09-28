@@ -164,7 +164,7 @@ class SugarscapeSimulation(dworp.BasicSimulation):
         env = SugarscapeEnvironment(self.rng)
 
         # construct our agents
-        agents = [self.create_turtle() for _ in range(params.pop)]
+        agents = [self.create_agent() for _ in range(params.pop)]
 
         # assign them locations & add them to the environment
         for agent in agents:
@@ -176,7 +176,7 @@ class SugarscapeSimulation(dworp.BasicSimulation):
 
         super().__init__(agents, env, dworp.InfiniteTime(), dworp.BasicScheduler(), observer, SugarscapeTerminator())
 
-    def create_turtle(self):
+    def create_agent(self):
         sugar = self.rng.randint(5, 25)
         metabolism = self.rng.randint(1, 4)
         vision = self.rng.randint(1, 6)
