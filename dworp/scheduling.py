@@ -7,6 +7,7 @@ import logging
 from collections import OrderedDict
 from itertools import groupby
 
+
 class Scheduler(ABC):
     """Scheduling agents
 
@@ -62,6 +63,7 @@ class RandomSampleScheduler(Scheduler):
     def step(self, now, agents, env):
         return self.rng.permutation(len(agents))[:self.size]
 
+
 class PoissonScheduler(Scheduler):
     """
     Calculates update times for a set of users that will be chosen according to the model for Poisson arrivals.
@@ -96,7 +98,7 @@ class PoissonScheduler(Scheduler):
         # note that the time_dict returned is an ordered dict with keys the integer-valued times
         # Loop through all users and generate login times from their start time to tN
         times = []
-        for i in range(0,size):
+        for i in range(0, size):
             t = t0
             counter = 0
             while t < tN and counter < 1e4:
