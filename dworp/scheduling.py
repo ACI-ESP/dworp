@@ -53,7 +53,7 @@ class RandomSampleScheduler(Scheduler):
     """Uniformly sample from the list of agents
 
     Args:
-        size (int): size of the sample
+        size (int): size of the sample (number of agents to update at each time step)
         rng (numpy.random.RandomState): numpy random generator
     """
     def __init__(self, size, rng):
@@ -64,59 +64,23 @@ class RandomSampleScheduler(Scheduler):
         return self.rng.permutation(len(agents))[:self.size]
 
 
-class PoissonScheduler(Scheduler):
-    """
-    Calculates update times for a set of users that will be chosen according to the model for Poisson arrivals.
-    Each user will wake up at exponentially distributed random wait times, with a uniform parameter lambda, that
-    is constant over time and constant across users. Times are all integer-valued (could be interpreted as seconds).
+class BernoulliScheduler(Scheduler):
+    """Schedules agents using a Bernoulli process
+
+    Flips a coin at each time step to determine whether an agent updates.
+    A Poisson process is a continuous-time version of a Bernoulli process.
+    To obtain similar arrival time distributions to a discretized Poisson process,
+    set p = e^-y where y is the rate of the Poisson process.
 
     Args:
-        size (int): size of the sample (i.e., the number of actors/agents)
+        p (float): probability of heads (probability an agent updates)
         rng (numpy.random.RandomState): numpy random generator
-        t0: Overall period start time (we ensure nothing is scheduled for this time)
-        tN: Overall period stop time (exclusive)
-        lmda: Lambda parameter for the exponential samples
     """
-    def __init__(self, size, rng, t0, tN, lmda):
-        self.size = size
+    def __init__(self, p, rng):
+        assert 0 <= p <= 1
+        self.p = p
         self.rng = rng
-        self.t0 = t0
-        self.tN = tN
-        self.lmda = lmda
-        thisschedule = self.create_schedule(size, t0, tN, lmda)
-        self.schedule_dict = thisschedule
 
     def step(self, now, agents, env):
-        try:
-            thistimeagentinds = self.schedule_dict[now]
-        except KeyError:
-            print("Error in PoissonScheduler, calling step with a time that is not in the schedule, %f" % (now))
-            raise("Error in PoissonScheduler, calling step with a time that is not in the schedule")
-        return thistimeagentinds
-
-    def create_schedule(self, size, t0, tN, lmda):
-        # note that the time_dict returned is an ordered dict with keys the integer-valued times
-        # Loop through all users and generate login times from their start time to tN
-        times = []
-        for i in range(0, size):
-            t = t0
-            counter = 0
-            while t < tN and counter < 1e4:
-                counter = counter + 1
-                new_increment = self.rng.exponential(scale=lmda)
-                integer_increment = round(new_increment)
-                if integer_increment > 0:
-                    t = t + integer_increment
-                    if t < tN:
-                        times.append((i, t))
-
-        # Sort the times (takes n*log(n))
-        times = sorted(times, key=lambda x: x[1])
-
-        # Since some users will have identical login times, group by time and create an OrderedDict by time with entries
-        # containing a list of users logging in at that time
-        time_dict = OrderedDict()
-        for k, v in groupby(times, lambda x: x[1]):
-            time_dict[k] = list([x[0] for x in v])
-
-        return time_dict
+        trials = self.rng.binomial(n=1, p=self.p, size=len(agents))
+        return [i for i, e in enumerate(trials) if e == 1]
