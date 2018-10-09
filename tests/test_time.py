@@ -35,3 +35,12 @@ class InfiniteTimeTest(unittest.TestCase):
         times = [next(time) for x in range(5)]
         self.assertEqual(11, times[0])
         self.assertEqual(15, times[-1])
+
+
+class ScheduledTimeTest(unittest.TestCase):
+    def test(self):
+        schedule = [1, 3, 5, 7, 9]
+        time = ScheduledTime(schedule)
+        times = list(time)
+        self.assertEqual(5, len(times))
+        self.assertEqual(9, times[-1])
