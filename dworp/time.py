@@ -53,6 +53,30 @@ class BasicTime(Time):
         return self.time
 
 
+class ScheduledTime(Time):
+    """Uses a predetermined schedule
+
+    This can be used if a Scheduler precomputes a schedule with arbitrary times.
+
+    Args:
+        times (list): list of times from a predetermined schedule
+        start (int or float, optional): Start time of the simulation
+    """
+    def __init__(self, times, start=0):
+        self.times = times
+        self.num_steps = len(times)
+        self.time = start
+        self.start_time = start
+        self.step_count = 0
+
+    def __next__(self):
+        if self.step_count >= self.num_steps:
+            raise StopIteration
+        self.time = self.times[self.step_count]
+        self.step_count += 1
+        return self.time
+
+
 class InfiniteTime(Time):
     """Fixed step size and infinite num of steps
 
