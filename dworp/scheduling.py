@@ -96,7 +96,7 @@ class FastBernoulliScheduler(Scheduler):
         rng (numpy.random.RandomState): numpy random generator
         num_agents (int): constant number of agents in the simulation
         start (int): start time of the simulation (exclusive)
-        stop (int): stop time of the simulation (exclusive)
+        stop (int): stop time of the simulation (inclusive)
     """
     SAMPLE_SIZE = 10000
 
@@ -127,7 +127,7 @@ class FastBernoulliScheduler(Scheduler):
             t = self.t0
             while True:
                 t += next(gen)
-                if t >= self.tN:
+                if t > self.tN:
                     break
                 times.append((i, t))
 
